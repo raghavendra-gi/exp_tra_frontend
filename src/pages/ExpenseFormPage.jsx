@@ -7,6 +7,8 @@ import Layout from '../components/Layout';
 import FieldRenderer from '../components/FieldRenderer';
 import { fileToDataUrl, compressImage, newFileId } from '../utils/fileUtils';
 import { invalidateExpenses } from '../hooks/useExpenses';
+import { todayKey } from '../utils/dates';
+import TypeIcon from '../components/TypeIcon';
 
 /**
  * Guard component. With no expense type there is no form to show.
@@ -79,7 +81,17 @@ function ExpenseForm() {
   );
 
   // Initial values (pre-fill if editing)
-  const [values, setValues] = useState(() => editingExpense?.data || {});
+  // New expenses start with their date filled in: the day picked on the dashboard
+  // calendar, else today (fields marked `default: 'today'`).
+  const [values, setValues] = useState(() => {
+    if (editingExpense) return editingExpense.data || {};
+    const preset = /^\d{4}-\d{2}-\d{2}$/.test(location.state?.presetDate || '') ? location.state.presetDate : '';
+    const init = {};
+    for (const f of visibleFields) {
+      if (f.type === 'date' && f.default === 'today') init[f.key] = preset || todayKey();
+    }
+    return init;
+  });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [isBusy, setIsBusy] = useState(false);
@@ -246,7 +258,7 @@ function ExpenseForm() {
     <Layout title={pageTitle} subtitle={pageSubtitle}>
       <div className="card form-card">
         <div className="form-card-head">
-          <span className="type-icon type-icon-lg" aria-hidden="true">{config.icon}</span>
+          <TypeIcon type={expenseType} size="lg" />
           <div>
             <h2 className="card-heading">{config.title || expenseType}</h2>
             <p className="form-card-sub">Fields marked <span className="req">*</span> are required.</p>

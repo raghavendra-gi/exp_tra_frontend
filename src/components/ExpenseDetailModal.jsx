@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useToast } from '../context/ToastContext';
 import { expenseAPI } from '../api/client';
 import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import Modal from './Modal';
 import { formatDate, formatDateTime, formatMoney, statusBadgeClass, statusIcon, isApproverRole } from '../utils/format';
+import TypeIcon from './TypeIcon';
 
 const FIELD_ICONS = {
   date: 'i-calendar', fromDate: 'i-calendar', toDate: 'i-calendar',
@@ -64,7 +65,7 @@ const PDF_CLONE_CSS = `
 export default function ExpenseDetailModal({ expense: listExpense, onClose, onAction }) {
   const { user } = useAuth();
   const toast = useToast();
-  const [previewFiles, setPreviewFiles] = useState(null);
+  const [galleryStart, setGalleryStart] = useState(null);
   const [full, setFull] = useState(() => fullCache.get(cacheKey(listExpense)) || null);
   const [loadError, setLoadError] = useState('');
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -94,7 +95,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
   const ready = !!full;
   const data = expense.data || {};
 
-  const config = EXPENSE_TYPES[expense.type] || { fields: [], icon: '📋', title: expense.type };
+  const config = EXPENSE_TYPES[expense.type] || { fields: [], title: expense.type };
   const isApprover = isApproverRole(user);
   const isOwner = expense.employee_id === user?.username
     || expense.employee_name === user?.display_name || expense.employee_name === user?.username;
@@ -105,6 +106,13 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
     && Array.isArray(data[f.key])
     && data[f.key].length > 0
     && (!f.showIf || f.showIf(data))), [config, data]);
+
+  // Every attachment across every file field, in form order, for the one gallery.
+  const attachments = useMemo(() => fileFields.flatMap((f) => {
+    const label = f.label || f.title || f.key;
+    const list = data[f.key];
+    return list.map((file, i) => ({ ...file, label: list.length > 1 ? `${label} ${i + 1}` : label }));
+  }), [fileFields, data]);
 
   const tripOrigin = data.from || data.startLocation || '';
   const tripDestination = data.to || data.endLocation || '';
@@ -157,25 +165,18 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
 
   const headerButtons = (
     <div className="modal-file-buttons" style={{ marginRight: '8px' }}>
-      {fileFields.length > 0 && (
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', maxWidth: '240px' }}>
-          {fileFields.flatMap((f) => data[f.key].map((file, index) => (
-            <button
-              type="button"
-              key={`${f.key}-${index}`}
-              className={`peek-btn${ready ? '' : ' is-loading'}`}
-              disabled={!ready}
-              onClick={() => setPreviewFiles({
-                files: [{ ...file, label: f.label || f.title || f.key }],
-                title: f.label || f.title || 'Attachment',
-              })}
-              title={ready ? `View ${f.label || 'File'} ${index + 1}` : 'Loading attachment…'}
-              aria-label={`View ${f.label || 'file'} ${index + 1}`}
-            >
-              <svg className="icon" aria-hidden="true"><use href={ready ? '#i-eye' : '#i-spinner'} /></svg>
-            </button>
-          )))}
-        </div>
+      {attachments.length > 0 && (
+        <button
+          type="button"
+          className={`peek-btn peek-btn-count${ready ? '' : ' is-loading'}`}
+          disabled={!ready}
+          onClick={() => setGalleryStart(0)}
+          title={ready ? `View attachments (${attachments.length})` : 'Loading attachments…'}
+          aria-label={`View ${attachments.length} ${attachments.length === 1 ? 'attachment' : 'attachments'}`}
+        >
+          <svg className="icon" aria-hidden="true"><use href={ready ? '#i-eye' : '#i-spinner'} /></svg>
+          {ready && attachments.length > 1 && <span className="peek-count" aria-hidden="true">{attachments.length}</span>}
+        </button>
       )}
 
       <button type="button" className="peek-btn" onClick={() => window.print()} title="Print" aria-label="Print">
@@ -231,7 +232,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
       <div className="modal-banner">
         <div className="banner-main">
           <div className="banner-title-row">
-            <span className="banner-emoji" aria-hidden="true">{config.icon}</span>
+            <TypeIcon type={expense.type} size="lg" />
             <span className="banner-title">{config.title || expense.type}</span>
           </div>
           <div className="banner-sub">
@@ -387,28 +388,116 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
         )}
       </div>
 
-      {previewFiles && (
-        <FilePreviewModal files={previewFiles.files} title={previewFiles.title} onClose={() => setPreviewFiles(null)} />
+      {galleryStart !== null && (
+        <AttachmentGallery files={attachments} startIndex={galleryStart} onClose={() => setGalleryStart(null)} />
       )}
     </Modal>
   );
 }
 
-function FilePreviewModal({ files, title, onClose }) {
+/*
+ * One viewer for all attachments. The track is a horizontal scroll-snap strip,
+ * so touch swipe, trackpad swipe and momentum are native. Arrow buttons and
+ * the ← / → keys do the same for mouse and keyboard users — and for PDFs,
+ * whose iframe swallows swipe gestures.
+ */
+export function AttachmentGallery({ files, startIndex = 0, onClose }) {
+  const trackRef = useRef(null);
+  const [index, setIndex] = useState(startIndex);
+  const count = files.length;
+
+  const goTo = useCallback((i, smooth = true) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const next = Math.max(0, Math.min(count - 1, i));
+    track.scrollTo({ left: next * track.clientWidth, behavior: smooth ? 'smooth' : 'auto' });
+    setIndex(next);
+  }, [count]);
+
+  // Jump to the starting slide without animating.
+  useEffect(() => { goTo(startIndex, false); }, [goTo, startIndex]);
+
+  // Keep the counter in sync with swipes.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return undefined;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const w = track.clientWidth || 1;
+        setIndex(Math.round(track.scrollLeft / w));
+      });
+    };
+    track.addEventListener('scroll', onScroll, { passive: true });
+    return () => { cancelAnimationFrame(raf); track.removeEventListener('scroll', onScroll); };
+  }, []);
+
+  // Re-align after a rotate / resize, otherwise the strip ends up between slides.
+  useEffect(() => {
+    const onResize = () => goTo(index, false);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [goTo, index]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(index + 1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(index - 1); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [goTo, index]);
+
+  const current = files[index] || files[0];
+  const title = count > 1 ? `${current?.label || 'Attachment'} · ${index + 1} of ${count}` : (current?.label || 'Attachment');
+
   return (
-    <Modal isOpen onClose={onClose} title={title} className="image-viewer-modal">
-      <div className="preview-strip">
-        {files.map((file, i) => {
-          if (!file.dataUrl) return <p key={i} className="preview-cap">{file.name} — no preview available</p>;
-          return file.type === 'application/pdf' ? (
-            <iframe key={i} src={file.dataUrl} className="image-preview-pdf" title={file.name} />
-          ) : (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: file.label ? '16px 16px 0 16px' : '0' }}>
-              
-              <img src={file.dataUrl} alt={file.name} decoding="async" />
+    <Modal isOpen onClose={onClose} title={title} className="image-viewer-modal gallery-modal">
+      <div className="gallery" aria-roledescription="carousel">
+        <div className="gallery-track" ref={trackRef}>
+          {files.map((file, i) => (
+            <div
+              key={i}
+              className="gallery-slide"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${count}: ${file.label}`}
+              aria-hidden={i !== index}
+            >
+              {!file.dataUrl ? (
+                <p className="preview-cap">{file.name || file.label} — no preview available</p>
+              ) : file.type === 'application/pdf' ? (
+                <iframe src={file.dataUrl} className="image-preview-pdf" title={file.name || file.label} tabIndex={i === index ? 0 : -1} />
+              ) : (
+                <img src={file.dataUrl} alt={file.name || file.label} decoding="async" draggable={false} />
+              )}
             </div>
-          );
-        })}
+          ))}
+        </div>
+
+        {count > 1 && (
+          <>
+            <button type="button" className="gallery-nav is-prev" onClick={() => goTo(index - 1)} disabled={index === 0} aria-label="Previous attachment">
+              <svg className="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+            </button>
+            <button type="button" className="gallery-nav is-next" onClick={() => goTo(index + 1)} disabled={index === count - 1} aria-label="Next attachment">
+              <svg className="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+            </button>
+            <div className="gallery-dots">
+              {files.map((f, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`gallery-dot${i === index ? ' is-active' : ''}`}
+                  onClick={() => goTo(i)}
+                  aria-label={`Show ${f.label}`}
+                  aria-current={i === index ? 'true' : undefined}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </Modal>
   );
