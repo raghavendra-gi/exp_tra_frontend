@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import { formatMoney, formatDate, formatDateTimeParts, statusBadgeClass, statusIcon } from '../utils/format';
+import TypeIcon from './TypeIcon';
 
 /*
  * The expense table used by the Dashboard ("Recent expenses") and the expenses page.
@@ -42,7 +43,7 @@ const ExpenseRow = memo(function ExpenseRow({
       )}
       <td className="c-type">
         <span className="type-cell">
-          <span className="type-icon" aria-hidden="true">{config?.icon || '📋'}</span>
+          <TypeIcon type={e.type} />
           <span className="type-name">{e.type || '—'}</span>
         </span>
       </td>

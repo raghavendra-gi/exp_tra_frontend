@@ -1,6 +1,8 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import Layout from '../components/Layout';
+import { dayLong } from '../utils/dates';
+import TypeIcon from '../components/TypeIcon';
 
 const TYPES = Object.keys(EXPENSE_TYPES);
 
@@ -22,13 +24,23 @@ const preloadForm = () => { import('./ExpenseFormPage'); };
 
 export default function SelectExpenseTypePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set when coming from a day on the dashboard calendar.
+  const presetDate = /^\d{4}-\d{2}-\d{2}$/.test(location.state?.presetDate || '') ? location.state.presetDate : '';
 
   const handleSelect = (type) => {
-    navigate('/form', { state: { expenseType: type } });
+    navigate('/form', { state: { expenseType: type, ...(presetDate ? { presetDate } : {}) } });
   };
 
   return (
     <Layout title="New expense" subtitle="Choose what you’re claiming for">
+      {presetDate && (
+        <div className="form-banner banner-info preset-banner" role="status">
+          <svg className="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
+          <span>Filing for <strong>{dayLong(presetDate)}</strong>. You can still change the date on the form.</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/new', { replace: true })}>Use today</button>
+        </div>
+      )}
       <div className="type-grid" onPointerEnter={preloadForm} onTouchStart={preloadForm}>
         {TYPES.map((type) => (
           <button
@@ -37,7 +49,7 @@ export default function SelectExpenseTypePage() {
             className="type-btn"
             onClick={() => handleSelect(type)}
           >
-            <span className="emoji" aria-hidden="true">{EXPENSE_TYPES[type].icon}</span>
+            <TypeIcon type={type} size="lg" />
             <span className="type-text">
               <span className="type-title">
                 {type}

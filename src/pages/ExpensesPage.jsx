@@ -47,6 +47,15 @@ export default function ExpensesPage() {
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
 
+  // A sidebar shortcut (Awaiting review, Needs fixing…) while already on this page.
+  const navTab = location.state?.tab;
+  const [seenKey, setSeenKey] = useState(location.key);
+  if (seenKey !== location.key) {
+    setSeenKey(location.key);
+    const next = TABS.some((t) => t.key === navTab) ? navTab : 'all';
+    if (next !== activeTab) { setActiveTab(next); setPage(1); setSelectedIds(new Set()); }
+  }
+
   // One pass for every tab count, instead of one filter() per tab per render.
   const counts = useMemo(() => {
     const c = { all: expenses.length, pending: 0, approved: 0, rejected: 0, inprogress: 0 };
