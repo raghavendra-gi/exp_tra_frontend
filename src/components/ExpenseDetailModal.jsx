@@ -404,7 +404,7 @@ function FilePreviewModal({ files, title, onClose }) {
             <iframe key={i} src={file.dataUrl} className="image-preview-pdf" title={file.name} />
           ) : (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: file.label ? '16px 16px 0 16px' : '0' }}>
-              {file.label && <p style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--ink-2)', marginBottom: 2 }}>{file.label}</p>}
+              
               <img src={file.dataUrl} alt={file.name} decoding="async" />
             </div>
           );
