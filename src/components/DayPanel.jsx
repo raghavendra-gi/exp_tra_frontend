@@ -46,16 +46,7 @@ function DayPanel({ dayKey, items, isApprover, onView, onAction, onAdd }) {
                     </span>
                   </span>
                 </button>
-                {isApprover && e.status === 'Pending' && (
-                  <span className="day-item-actions">
-                    <button type="button" className="btn btn-icon btn-approve" onClick={() => onAction('approve', e)} aria-label={`Approve request ${e.id}`} title="Approve">
-                      <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
-                    </button>
-                    <button type="button" className="btn btn-icon btn-reject" onClick={() => onAction('reject', e)} aria-label={`Reject request ${e.id}`} title="Reject">
-                      <svg className="icon" aria-hidden="true"><use href="#i-x" /></svg>
-                    </button>
-                  </span>
-                )}
+                
               </li>
             );
           })}

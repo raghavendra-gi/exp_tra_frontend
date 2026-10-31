@@ -376,7 +376,7 @@ strong { font-weight:600; }
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent);
 }
 .type-glyph-sm { width:28px; height:28px; font-size:15px; }
-.type-glyph-lg { width:44px; height:44px; font-size:22px; border-radius:var(--r-md); }
+.type-glyph-lg { width:58px; height:58px; font-size:30px; border-radius:var(--r-lg); }
 .type-glyph[data-tone="amber"]  { --tone:#c2700a; }
 .type-glyph[data-tone="orange"] { --tone:#d9541e; }
 .type-glyph[data-tone="sky"]    { --tone:#0b84c6; }
@@ -819,17 +819,34 @@ strong { font-weight:600; }
 .empty-state .btn { margin:0 auto; }
 
 /* ── 12. EXPENSE TYPE PICKER ───────────────────────────────────── */
-.type-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:var(--sp-3); }
+.type-grid { 
+  display: grid; 
+  /* Make the cards slightly wider to fit the larger size */
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+  gap: var(--sp-5); /* Increased gap */
+}
+
 .type-btn {
-  display:flex; align-items:center; gap:var(--sp-4); text-align:left;
-  padding:var(--sp-4); min-height:84px;
-  background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);
-  box-shadow:var(--sh-1);
-  transition:border-color var(--dur), box-shadow var(--dur);
+  display: flex; 
+  align-items: center; 
+  gap: var(--sp-5); /* More space between icon and text */
+  text-align: left;
+  padding: var(--sp-6); /* Increased from sp-4 to sp-6 */
+  min-height: 140px; /* Increased from 84px to 140px to fill vertical space */
+  background: var(--surface); 
+  border: 1px solid var(--border); 
+  border-radius: var(--r-lg); /* Slightly rounder corners */
+  box-shadow: var(--sh-1);
+  transition: border-color var(--dur), box-shadow var(--dur), transform var(--dur);
+}
+.type-btn:hover { 
+  border-color: var(--accent); 
+  box-shadow: var(--sh-2); 
+  transform: translateY(-2px); /* Subtle lift effect */
 }
 .type-btn:hover { border-color:var(--accent); box-shadow:var(--sh-2); }
 .type-text { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
-.type-title { display:flex; align-items:center; gap:var(--sp-2); font-weight:600; font-size:var(--t-md); color:var(--ink); }
+.type-title { display:flex; align-items:center; gap:var(--sp-2); font-weight:600; font-size:var18px; color:var(--ink); }
 .type-desc { color:var(--ink-3); font-size:var(--t-sm); line-height:1.4; }
 .type-tag { font-size:11px; font-weight:500; padding:1px 8px; border-radius:var(--r-full); background:var(--st-info-bg); color:var(--st-info-ink); }
 .type-chevron { color:var(--ink-3); font-size:18px; transition:transform var(--dur), color var(--dur); }
