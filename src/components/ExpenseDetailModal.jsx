@@ -7,6 +7,10 @@ import Modal from './Modal';
 import { formatDate, formatDateTime, formatMoney, statusBadgeClass, statusIcon, isApproverRole } from '../utils/format';
 import TypeIcon from './TypeIcon';
 
+// 👇 IMPORT THE NEW MODERN LIBRARIES 👇
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
+
 const FIELD_ICONS = {
   date: 'i-calendar', fromDate: 'i-calendar', toDate: 'i-calendar',
   amount: 'i-rupee', estimatedCost: 'i-calc', items: 'i-list',
@@ -21,46 +25,9 @@ const FIELD_ICONS = {
 };
 const HIDDEN = ['date', 'amount', 'remarks'];
 
-/*
- * Lists now hold "lite" expenses (no attachment bytes). The full record, with
- * attachments, is fetched here when the request is opened, and kept in a small
- * cache so re-opening the same request is instant. The cache key includes the
- * status and submit time, so an edited / decided request is fetched fresh.
- */
 const fullCache = new Map();
 const cacheKey = (e) => `${e.id}|${e.status}|${e.submitted_date}|${e.decided_date}`;
 const MAX_CACHE = 20;
-
-let html2pdfPromise = null;
-function loadHtml2Pdf() {
-  if (window.html2pdf) return Promise.resolve();
-  if (!html2pdfPromise) {
-    html2pdfPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.onload = resolve;
-      script.onerror = () => {
-        html2pdfPromise = null;
-        script.remove();
-        reject(new Error('Failed to load PDF library. Check your internet.'));
-      };
-      document.head.appendChild(script);
-    });
-  }
-  return html2pdfPromise;
-}
-
-const PDF_CLONE_CSS = `
-  .btn-row { display: none !important; }
-  .modal-banner { border: 1px solid #e0e0e0 !important; }
-  .badge { border: 1px solid transparent !important; }
-  .reason-box { border: 1px solid #e0e0e0 !important; }
-  .badge-approved { border-color: #0ca30c !important; }
-  .badge-pending { border-color: #fab219 !important; }
-  .badge-rejected { border-color: #d03b3b !important; }
-  .timeline { page-break-inside: avoid !important; }
-  .timeline li { page-break-inside: avoid !important; }
-`;
 
 export default function ExpenseDetailModal({ expense: listExpense, onClose, onAction }) {
   const { user } = useAuth();
@@ -90,7 +57,6 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
     return () => { cancelled = true; };
   }, [listExpense]);
 
-  // Show the full record once it's here; until then the list copy (same fields, no file bytes).
   const expense = full || listExpense;
   const ready = !!full;
   const data = expense.data || {};
@@ -107,7 +73,6 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
     && data[f.key].length > 0
     && (!f.showIf || f.showIf(data))), [config, data]);
 
-  // Every attachment across every file field, in form order, for the one gallery.
   const attachments = useMemo(() => fileFields.flatMap((f) => {
     const label = f.label || f.title || f.key;
     const list = data[f.key];
@@ -134,27 +99,40 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
       + '&travelmode=driving'
     : '';
 
+  // 👇 COMPLETELY REWRITTEN PDF GENERATION FUNCTION 👇
   const downloadPdf = async () => {
     if (pdfBusy) return;
     setPdfBusy(true);
     try {
-      await loadHtml2Pdf();
       const el = document.querySelector('.modal-content');
       if (!el) throw new Error('Could not find modal content.');
-      await window.html2pdf().set({
-        margin: 10,
-        filename: `Expense-${expense.id}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2, useCORS: true, logging: false,
-          onclone: (doc) => {
-            const style = doc.createElement('style');
-            style.innerHTML = PDF_CLONE_CSS;
-            doc.head.appendChild(style);
-          },
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      }).from(el).save();
+
+      // 1. Render the DOM to a Canvas using html2canvas-pro
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        onclone: (doc) => {
+          // Hide interactive buttons in the PDF view
+          const style = doc.createElement('style');
+          style.innerHTML = `
+            .btn-row { display: none !important; }
+            .timeline { page-break-inside: avoid !important; }
+            .timeline li { page-break-inside: avoid !important; }
+          `;
+          doc.head.appendChild(style);
+        }
+      });
+
+      // 2. Create the PDF using jsPDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Expense-${expense.id}.pdf`);
     } catch (err) {
       console.error('PDF generation failed:', err);
       toast(err.message || 'Could not generate PDF. Use Print and choose "Save as PDF" instead.', 'error');
@@ -224,7 +202,6 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
     );
   });
 
-  // Edit / resubmit / end trip carry the attachments into the form, so they wait for the full record.
   const needsFull = { disabled: !ready, title: ready ? undefined : 'Loading…' };
 
   return (
@@ -395,12 +372,6 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
   );
 }
 
-/*
- * One viewer for all attachments. The track is a horizontal scroll-snap strip,
- * so touch swipe, trackpad swipe and momentum are native. Arrow buttons and
- * the ← / → keys do the same for mouse and keyboard users — and for PDFs,
- * whose iframe swallows swipe gestures.
- */
 export function AttachmentGallery({ files, startIndex = 0, onClose }) {
   const trackRef = useRef(null);
   const [index, setIndex] = useState(startIndex);
@@ -414,10 +385,8 @@ export function AttachmentGallery({ files, startIndex = 0, onClose }) {
     setIndex(next);
   }, [count]);
 
-  // Jump to the starting slide without animating.
   useEffect(() => { goTo(startIndex, false); }, [goTo, startIndex]);
 
-  // Keep the counter in sync with swipes.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return undefined;
@@ -433,7 +402,6 @@ export function AttachmentGallery({ files, startIndex = 0, onClose }) {
     return () => { cancelAnimationFrame(raf); track.removeEventListener('scroll', onScroll); };
   }, []);
 
-  // Re-align after a rotate / resize, otherwise the strip ends up between slides.
   useEffect(() => {
     const onResize = () => goTo(index, false);
     window.addEventListener('resize', onResize);

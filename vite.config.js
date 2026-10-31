@@ -6,13 +6,13 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // Your FastAPI backend
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },
   },
   build: {
-    target: 'es2020',        // matches Capacitor's Android WebView and every current browser
+    target: 'es2020',
     cssCodeSplit: true,
     reportCompressedSize: false,
   },
