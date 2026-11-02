@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { formatMoney, isApproverRole } from '../utils/format';
 
@@ -17,7 +17,7 @@ const STATUSES = [
 ];
 
 function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const isApprover = isApproverRole(useAuth()?.user);
 
   const { total, totalAmount, rows } = useMemo(() => {
@@ -36,7 +36,7 @@ function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
     };
   }, [expenses]);
 
-  const open = (tab) => navigate('/expenses', { state: { tab } });
+  //const open = (tab) => navigate('/expenses', { state: { tab } });
   const pctText = (p) => `${Math.round(p)}%`;
 
   return (
