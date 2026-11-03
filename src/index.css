@@ -205,7 +205,15 @@ strong { font-weight:600; }
   box-shadow:inset -1px 0 0 var(--nav-line);
 }
 
-.sidebar-header { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); padding:var(--sp-1) var(--sp-2) var(--sp-4); }
+.sidebar-header { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); padding:var(--sp-1) var(--sp-2) var(--sp-4);
+  /* Add the dividing line and make it stretch edge-to-edge */
+  border-bottom: 1px solid var(--nav-line); 
+  margin: var(--sp-2); 
+  padding-left: var(--sp-3); 
+  padding-right: var(--sp-3); 
+  
+  /* Add a little extra space below the line */
+  margin-bottom: var(--sp-2); }
 .sidebar-brand { display:flex; align-items:center; gap:var(--sp-3); min-width:0; }
 .sidebar-logo { width:36px; height:36px; border-radius:var(--r-sm); background:#fff; box-shadow:0 0 0 1px var(--nav-line); object-fit:contain; padding:3px; flex:none; }
 .sidebar-brand-text { display:flex; flex-direction:column; min-width:0; gap:1px; }

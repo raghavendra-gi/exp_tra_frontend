@@ -33,7 +33,7 @@ export default function SelectExpenseTypePage() {
   };
 
   return (
-    <Layout title="New expense" subtitle="Choose what you’re claiming for">
+    <Layout title="New expense">
       {presetDate && (
         <div className="form-banner banner-info preset-banner" role="status">
           <svg className="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
