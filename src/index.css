@@ -11,7 +11,7 @@
 :root {
   /* Type scale (Elements-style, 14px body) */
   --font-sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --t-xs:12px;  --t-sm:18px;  --t-base:14px; --t-md:16px; --t-lg:20px; --t-xl:24px;
+  --t-xs:12px;  --t-sm:11px;  --t-base:14px; --t-md:16px; --t-lg:20px; --t-xl:24px;
   --lh-tight:1.25; --lh:1.5;
 
   /* legacy names still used inline by a few components */
