@@ -1,14 +1,7 @@
 import { memo, useMemo } from 'react';
-//import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { formatMoney, isApproverRole } from '../utils/format';
 
-/*
- * Dashboard overview: a compact KPI strip. Header carries the grand total; each
- * cell shows one status (count, rupee total, share of all requests). Each card opens
- * the matching tab on the expenses page. Approvers get the Pending card
- * highlighted, since that is the one that needs them.
- */
 const STATUSES = [
   { key: 'pending',    status: 'Pending',     label: 'Pending',     hint: 'Awaiting decision' },
   { key: 'approved',   status: 'Approved',    label: 'Approved',    hint: 'Accepted by Head / HR' },
@@ -17,7 +10,6 @@ const STATUSES = [
 ];
 
 function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
-  //const navigate = useNavigate();
   const isApprover = isApproverRole(useAuth()?.user);
 
   const { total, totalAmount, rows } = useMemo(() => {
@@ -36,7 +28,6 @@ function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
     };
   }, [expenses]);
 
-  //const open = (tab) => navigate('/expenses', { state: { tab } });
   const pctText = (p) => `${Math.round(p)}%`;
 
   return (
@@ -56,13 +47,12 @@ function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
 
       <div className="ledger-grid">
         {rows.map((r) => (
-          <button
+          /* Changed from <button> to <div>. onClick is removed. */
+          <div
             key={r.key}
-            type="button"
             className={`ledger-item${isApprover && r.key === 'pending' && r.n > 0 ? ' is-focus' : ''}`}
             data-status={r.key}
-            onClick={() => open(r.key)}
-            aria-label={`${r.label}: ${r.n} requests, ${formatMoney(r.amt)}. Show them`}
+            aria-label={`${r.label}: ${r.n} requests, ${formatMoney(r.amt)}`}
           >
             <span className="ledger-top">
               <span className="ledger-label"><span className="ledger-dot" aria-hidden="true" />{r.label}</span>
@@ -80,7 +70,7 @@ function StatusSummary({ expenses, loading = false, title = 'Overview' }) {
               <span style={{ width: loading ? 0 : `${r.pct}%` }} />
             </span>
             <span className="ledger-hint">{r.hint}</span>
-          </button>
+          </div>
         ))}
       </div>
     </section>
