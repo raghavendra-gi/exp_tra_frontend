@@ -251,7 +251,10 @@ strong { font-weight:600; }
 :root[data-theme="dark"] .sidebar-count.is-critical { color:#fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sidebar-count.is-critical { color:#fff; } }
 
-.sidebar-foot { border-top:1px solid var(--nav-line); padding-top:var(--sp-3); margin-top:var(--sp-3); }
+.sidebar-foot { border-top:1px solid var(--nav-line); padding-top:var(--sp-3); margin-top:var(--sp-3); margin-left: calc(-1 * var(--sp-3));
+  margin-right: calc(-1 * var(--sp-3));
+  padding-left: var(--sp-3);
+  padding-right: var(--sp-3); }
 .sidebar-user { display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-2); border-radius:var(--r-sm); }
 .sidebar-user .avatar { width:36px; height:36px; background:var(--nav-avatar); color:var(--nav-ink-strong); box-shadow:inset 0 0 0 1px var(--nav-line); }
 .sidebar-user-text { display:flex; flex-direction:column; min-width:0; line-height:1.3; flex:1; }
@@ -335,9 +338,33 @@ strong { font-weight:600; }
   padding:var(--sp-3) var(--sp-4); border-bottom:1px solid var(--border);
 }
 .ledger-title { font-size:var(--t-sm); font-weight:600; color:var(--ink); }
-.ledger-total { display:flex; align-items:center; gap:var(--sp-2); font-size:var(--t-sm); color:var(--ink-3); font-variant-numeric:tabular-nums; }
-.ledger-total strong { color:var(--ink); font-weight:600; }
-.ledger-sep { width:1px; height:12px; background:var(--border-strong); }
+.ledger-total { 
+  display: flex; 
+  align-items: center; 
+  gap: var(--sp-3); 
+  font-size: var(--t-base); 
+  font-weight: 500;
+  color: var(--on-accent); /* White text */
+  font-variant-numeric: tabular-nums; 
+  
+  /* High-contrast styling */
+  background: var(--accent); /* Solid brand blue */
+  padding: 6px 16px;
+  border-radius: var(--r-full);
+  box-shadow: 0 2px 4px rgba(11, 87, 201, 0.2); /* Slight shadow to lift it */
+}
+
+.ledger-total strong { 
+  color: var(--on-accent); /* White text */
+  font-size: var(--t-md); /* Make the amount bigger */
+  font-weight: 700; 
+}
+
+.ledger-sep { 
+  width: 1px; 
+  height: 16px; 
+  background: color-mix(in srgb, var(--on-accent) 40%, transparent); /* Light separator */
+}
 
 .ledger-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); }
 .ledger-item {
