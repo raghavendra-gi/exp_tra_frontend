@@ -64,28 +64,7 @@ const ExpenseRow = memo(function ExpenseRow({
       </td>
       <td className="c-actions">
         <div className="row-actions">
-          {showQuickDecide && e.status === 'Pending' && (
-            <>
-              <button
-                type="button"
-                className="btn btn-icon btn-approve"
-                onClick={() => onAction('approve', e)}
-                title="Approve"
-                aria-label={`Approve request ${e.id}`}
-              >
-                <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
-              </button>
-              <button
-                type="button"
-                className="btn btn-icon btn-reject"
-                onClick={() => onAction('reject', e)}
-                title="Reject"
-                aria-label={`Reject request ${e.id}`}
-              >
-                <svg className="icon" aria-hidden="true"><use href="#i-x" /></svg>
-              </button>
-            </>
-          )}
+          
           <button
             type="button"
             className="btn btn-outline btn-sm"
