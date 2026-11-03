@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import LoginPage from './pages/LoginPage';
 import { isApproverRole } from './utils/format';
+import ProfilePage from './pages/ProfilePage';
 
 /*
  * Pages are split into their own files and downloaded on first visit.
@@ -68,6 +69,7 @@ function AppRoutes() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" replace />} />
       </Routes>
     </Suspense>
   );

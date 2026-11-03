@@ -120,13 +120,15 @@ function Sidebar({ isOpen, onClose }) {
           </ul>
         </div>
 
-        <div className="sidebar-foot">
-          <div className="sidebar-user">
-            <div className="avatar" aria-hidden="true">{initials}</div>
-            <div className="sidebar-user-text">
-              <span className="sidebar-user-name">{name}</span>
-              <span className="sidebar-user-role">{ROLE_LABEL[user?.role] || user?.role}</span>
-            </div>
+                <div className="sidebar-foot">
+          <div className="sidebar-user-wrapper">
+            <Link to="/profile" className="sidebar-user" onClick={onClose}>
+              <div className="avatar" aria-hidden="true">{initials}</div>
+              <div className="sidebar-user-text">
+                <span className="sidebar-user-name">{name}</span>
+                <span className="sidebar-user-role">{ROLE_LABEL[user?.role] || user?.role}</span>
+              </div>
+            </Link>
             <button type="button" className="sidebar-signout" onClick={handleLogout} title="Sign out" aria-label="Sign out">
               <svg className="icon" aria-hidden="true"><use href="#i-logout" /></svg>
             </button>
