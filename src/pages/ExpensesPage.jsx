@@ -126,7 +126,6 @@ export default function ExpensesPage() {
   return (
     <Layout
       title={isApprover ? 'All expenses' : 'My expenses'}
-      subtitle={isApprover ? 'Every request from every employee' : 'Everything you have submitted'}
       headerRight={headerRight}
     >
       <div className="card card-flush">

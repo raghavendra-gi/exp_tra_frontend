@@ -148,7 +148,7 @@ export default function DashboardPage() {
   const maxCatN = data.categories.reduce((m, c) => Math.max(m, c.n), 0);
 
   return (
-    <Layout title="Dashboard" subtitle={subtitle} headerRight={headerRight}>
+    <Layout title="Dashboard" headerRight={headerRight}>
       {error && !expenses.length ? (
         <div className="card">
           <div className="form-banner banner-error" role="alert">
