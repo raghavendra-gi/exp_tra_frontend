@@ -286,10 +286,10 @@ strong { font-weight:600; }
 .page-header {
   position:sticky; top:0; z-index:20;
   display:flex; align-items:center; justify-content:space-between; gap:var(--sp-4);
-  min-height:72px;
+  min-height:51px;
   /* line the header up with the centred page content on very wide screens */
-  padding:var(--sp-4) max(var(--sp-6), calc((100% - var(--content-max)) / 2 + var(--sp-6)));
-  margin-bottom:var(--sp-5);
+  padding:var(--sp-2) max(var(--sp-6), calc((100% - var(--content-max)) / 2 + var(--sp-6)));
+  margin-bottom:var(--sp-4);
   background:color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter:saturate(1.4) blur(8px);
   border-bottom:1px solid var(--border);
