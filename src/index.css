@@ -11,7 +11,7 @@
 :root {
   /* Type scale (Elements-style, 14px body) */
   --font-sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --t-xs:12px;  --t-sm:11px;  --t-base:14px; --t-md:16px; --t-lg:20px; --t-xl:24px;
+  --t-xs:12px;  --t-sm:11px;  --t-base:14px; --t-md:13px; --t-lg:20px; --t-xl:24px;
   --lh-tight:1.25; --lh:1.5;
 
   /* legacy names still used inline by a few components */
@@ -1204,6 +1204,131 @@ body.modal-open { overflow:hidden; }
   .split-details-layout { gap:0; }
 }
 @media (max-width:640px) {
+   /* 1. Decrease the size of the filter dropdowns */
+  .filter select {
+    font-size: 14px;      /* Decreased from 16px */
+    height: 32px;         /* Slightly shorter */
+    padding: 0 26px 0 var(--sp-2); /* Tighter padding */
+    background-size: 14px; /* Smaller dropdown arrow */
+    background-position: right 6px center;
+  }
+
+  /* 2. Decrease the size of the Status Overview Card */
+  .ledger-head {
+    padding: var(--sp-2) var(--sp-3); 
+  }
+  
+  .ledger-title {
+    font-size: 12px;      /* Make the title smaller */
+  }
+
+  .ledger-total {
+    font-size: 13px;      /* Decrease the "14 requests" text */
+    padding: 4px 12px;    /* Tighter pill padding */
+    gap: 6px;             /* Tighter gap between text and amount */
+  }
+
+  .ledger-total strong {
+    font-size: 14px;      /* Decrease the amount (₹46,885.00) */
+  }
+
+  .ledger-item {
+    padding: var(--sp-2) var(--sp-3); /* Tighter padding for the 4 status boxes */
+    gap: 4px;
+  }
+
+  .ledger-label, 
+  .ledger-pct {
+    font-size: 10px;      /* Decrease "PENDING", "APPROVED", and the % */
+  }
+
+  .ledger-count {
+    font-size: 16px;      /* Decrease the big numbers (8, 1, 3, 2) from 18px */
+  }
+
+  .ledger-amount {
+    font-size: 11px;      /* Keep the amounts compact */
+  }
+
+
+    .profile-header-gradient {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  /* Top row: Badge & Edit Button */
+  .ph-top-row {
+    flex-wrap: wrap; /* Prevents overflow on very small phones */
+    gap: 8px;
+  }
+
+  .ph-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  .ph-edit-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    height: 28px; /* Make the button slightly shorter */
+  }
+
+  /* Name row */
+  .ph-main-row {
+    gap: var(--sp-3);
+  }
+
+  .ph-name {
+    font-size: 18px; /* Smaller name */
+    gap: 6px;
+  }
+
+  .ph-role-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .ph-id {
+    font-size: 11px;
+  }
+
+  /* Quick Stats (Mail ID & Branch) */
+  .profile-quick-stats {
+    grid-template-columns: 1fr; /* Stack them vertically to give email full width */
+    gap: 12px;
+    padding: 0 var(--sp-2);
+    margin-bottom: var(--sp-4);
+  }
+
+  .pqs-label {
+    font-size: 11px;
+  }
+
+  .pqs-value {
+    font-size: 14px; 
+    word-break: break-word; /* Prevents email from breaking weirdly */
+  }
+
+  /* Profile Information Box */
+  .profile-info-section {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .pi-header h3 {
+    font-size: 15px;
+  }
+
+  .pi-grid {
+    gap: var(--sp-3) var(--sp-4);
+  }
+  
+  .pi-field label {
+    font-size: 10px;
+  }
+  
+  .pi-value-box {
+    font-size: 13px;
+  }
   .page-header h1 { font-size:var(--t-md); }
   .page-subtitle { font-size:var(--t-xs); }
   .page-header-right .btn-text { display:none; }

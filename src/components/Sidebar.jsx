@@ -4,7 +4,7 @@ import { useAuth } from '../AuthContext';
 import { isApproverRole } from '../utils/format';
 import { readCache, subscribeCache } from '../utils/expenseCache';
 
-const ROLE_LABEL = { head: 'Head', hr: 'HR', employee: 'Employee' };
+const ROLE_LABEL = { head: 'Head', hr: 'HR', op_head: 'Op Head', employee: 'Employee' };
 
 /*
  * Navigation in two groups:
@@ -85,10 +85,19 @@ function Sidebar({ isOpen, onClose }) {
           <p className="sidebar-section">Workspace</p>
           <ul className="sidebar-menu">
             <li>
-              <NavLink to={isApprover ? '/dashboard' : '/my'} onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
-                <svg className="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
-                <span className="sidebar-label">Dashboard</span>
-              </NavLink>
+              <NavLink 
+  to={
+    user?.role === 'head' ? '/dashboard' : 
+    user?.role === 'hr' ? '/hr-dashboard' : 
+    user?.role === 'op_head' ? '/op-head-dashboard' : 
+    '/my'
+  } 
+  onClick={onClose} 
+  className={({ isActive }) => (isActive ? 'active' : undefined)}
+>
+  <svg className="icon" aria-hidden="true"><use href="#i-dashboard" /></svg>
+  <span className="sidebar-label">Dashboard</span>
+</NavLink>
             </li>
             <li>
               <NavLink to="/expenses" onClick={onClose} className={listLink}>
@@ -101,6 +110,14 @@ function Sidebar({ isOpen, onClose }) {
 
           <p className="sidebar-section">{isApprover ? 'Review' : 'Status'}</p>
           <ul className="sidebar-menu">
+            {user?.role === 'hr' && (
+  <li>
+    <NavLink to="/employees/new" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+      <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
+      <span className="sidebar-label">Create Employee</span>
+    </NavLink>
+  </li>
+)}
             {queues.map((q) => (
               <li key={q.tab}>
                 <Link

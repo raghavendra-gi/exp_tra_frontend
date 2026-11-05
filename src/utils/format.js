@@ -66,4 +66,4 @@ export function statusIcon(status) {
   return STATUS_ICONS[status] || 'i-info';
 }
 
-export const isApproverRole = (user) => user?.role === 'head' || user?.role === 'hr';
+export const isApproverRole = (user) => user?.role === 'head' || user?.role === 'hr' || user?.role === 'op_head';

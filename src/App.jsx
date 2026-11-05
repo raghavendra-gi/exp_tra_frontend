@@ -5,18 +5,16 @@ import { ToastProvider } from './context/ToastContext';
 import LoginPage from './pages/LoginPage';
 import { isApproverRole } from './utils/format';
 import ProfilePage from './pages/ProfilePage';
+import CreateEmployeePage from './pages/CreateEmployeePage';
 
-/*
- * Pages are split into their own files and downloaded on first visit.
- * The sign-in screen no longer waits for the date picker, the form,
- * the maps code etc. — those arrive only when a page needs them.
- */
+import OpHeadDashboardPage from './pages/OpHeadDashboardPage';
+import HRDashboardPage from './pages/HRDashboardPage';
+
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const SelectExpenseTypePage = lazy(() => import('./pages/SelectExpenseTypePage'));
 const ExpenseFormPage = lazy(() => import('./pages/ExpenseFormPage'));
 
-/** Once signed in, fetch the other pages in the background so navigation is instant. */
 let prefetched = false;
 function prefetchPages(user) {
   if (prefetched || !user) return;
@@ -47,29 +45,37 @@ function AppRoutes() {
   if (loading) return <PageLoader />;
 
   prefetchPages(user);
-  const isApprover = isApproverRole(user);
-  const home = isApprover ? '/dashboard' : '/my';
+
+  const home = 
+    user?.role === 'head' ? '/dashboard' : 
+    user?.role === 'hr' ? '/hr-dashboard' : 
+    user?.role === 'op_head' ? '/op-head-dashboard' : 
+    user?.role === 'employee' ? '/my' : 
+    '/login';
 
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Send approvers to /dashboard, employees to /my */}
         <Route path="/login" element={user ? <Navigate to={home} replace /> : <LoginPage />} />
 
-        {/* Approver Dashboard */}
-        <Route path="/dashboard" element={user && isApprover ? <DashboardPage /> : <Navigate to={user ? home : '/login'} replace />} />
+        <Route path="/dashboard" element={user?.role === 'head' ? <DashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/hr-dashboard" element={user?.role === 'hr' ? <HRDashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/op-head-dashboard" element={user?.role === 'op_head' ? <OpHeadDashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/my" element={user?.role === 'employee' ? <DashboardPage /> : <Navigate to={home} replace />} />
 
-        {/* Employee Dashboard (same component) */}
-        <Route path="/my" element={user && !isApprover ? <DashboardPage /> : <Navigate to={user ? home : '/login'} replace />} />
+        {/* 👇 NOW IT IS INSIDE THE <Routes> BLOCK 👇 */}
+        <Route 
+          path="/employees/new" 
+          element={user?.role === 'hr' ? <CreateEmployeePage /> : <Navigate to={home} replace />} 
+        />
 
-        {/* Shared Routes */}
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />
         <Route path="/form" element={user ? <ExpenseFormPage /> : <Navigate to="/login" replace />} />
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
         <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" replace />} />
+
+        {/* Fallback must be at the very bottom */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Suspense>
   );

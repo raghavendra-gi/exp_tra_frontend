@@ -132,11 +132,19 @@ export default function DashboardPage() {
     ? (data.pendingAll ? `${data.pendingAll} ${data.pendingAll === 1 ? 'request is' : 'requests are'} waiting for your decision` : 'Nothing is waiting for your decision')
     : `Welcome back, ${firstName}`;
 
-  const headerRight = isApprover ? (
-    <button className="btn btn-primary btn-sm" onClick={() => navigate('/expenses', { state: { tab: 'pending' } })}>
-      <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
-      <span className="btn-text">Review pending</span>
-    </button>
+    const headerRight = isApprover ? (
+    <div className="btn-row">
+      {user?.role === 'hr' && (
+        <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees/new')}>
+          <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
+          <span className="btn-text">Create Employee</span>
+        </button>
+      )}
+      <button className="btn btn-primary btn-sm" onClick={() => navigate('/expenses', { state: { tab: 'pending' } })}>
+        <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
+        <span className="btn-text">Review pending</span>
+      </button>
+    </div>
   ) : (
     <button className="btn btn-primary btn-sm" onClick={() => navigate('/new')}>
       <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
