@@ -131,7 +131,6 @@ export default function DashboardPage() {
   const subtitle = loading ? '' : isApprover
     ? (data.pendingAll ? `${data.pendingAll} ${data.pendingAll === 1 ? 'request is' : 'requests are'} waiting for your decision` : 'Nothing is waiting for your decision')
     : `Welcome back, ${firstName}`;
-
     const headerRight = isApprover ? (
     <div className="btn-row">
       {user?.role === 'hr' && (
@@ -321,7 +320,7 @@ export default function DashboardPage() {
                           onClick={() => patch({ type: type === c.type ? '' : c.type })}
                           aria-pressed={type === c.type}
                           title={type === c.type ? 'Remove category filter' : `Show only ${c.type}`}
-                        >
+                     >
                           <TypeIcon type={c.type} size="sm" />
                           <span className="cat-main">
                             <span className="cat-top">

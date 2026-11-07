@@ -4,20 +4,22 @@ import { useToast } from '../context/ToastContext';
 import { expenseAPI } from '../api/client';
 import Layout from '../components/Layout';
 
+const INITIAL_STATE = {
+  username: '',
+  password: '',
+  display_name: '',
+  role: 'employee',
+  email: '',
+  branch: '',
+  designation: '',
+};
+
 export default function CreateEmployeePage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [isBusy, setIsBusy] = useState(false);
 
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    display_name: '',
-    role: 'employee',
-    email: '',
-    branch: '',
-    designation: '',
-  });
+  const [formData, setFormData] = useState(INITIAL_STATE);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,7 +40,10 @@ export default function CreateEmployeePage() {
         body: JSON.stringify(formData),
       });
       toast('Employee created successfully!', 'success');
-      navigate(-1); 
+      
+      // 👇 Instead of navigating away, reset the form so you can add another
+      setFormData(INITIAL_STATE);
+      
     } catch (err) {
       toast(err.message || 'Failed to create employee.', 'error');
     } finally {
@@ -87,7 +92,7 @@ export default function CreateEmployeePage() {
           </div>
 
           <div className="btn-row btn-row-end form-actions" style={{ marginTop: 'var(--sp-5)' }}>
-            <button type="button" className="btn btn-outline" onClick={() => navigate(-1)} disabled={isBusy}>Cancel</button>
+            <button type="button" className="btn btn-outline" onClick={() => navigate(-1)} disabled={isBusy}>Back</button>
             <button type="submit" className={`btn btn-primary ${isBusy ? 'is-busy' : ''}`} disabled={isBusy}>Create Account</button>
           </div>
         </form>
