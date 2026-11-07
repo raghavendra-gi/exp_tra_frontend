@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const clearSession = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('current_user');
+    sessionStorage.removeItem('et.dashboard.view'); 
     invalidateExpenses();
     setUser(null);
     document.body.classList.remove('logged-in');
@@ -49,6 +50,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ username, password }),
     });
     invalidateExpenses();
+    sessionStorage.removeItem('et.dashboard.view'); 
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('current_user', JSON.stringify(data.user));
     setUser(data.user);

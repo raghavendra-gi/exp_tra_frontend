@@ -11,14 +11,14 @@
 :root {
   /* Type scale (Elements-style, 14px body) */
   --font-sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --t-xs:12px;  --t-sm:11px;  --t-base:14px; --t-md:13px; --t-lg:20px; --t-xl:24px;
+  --t-xs:12px;  --t-sm:11px;  --t-base:12px; --t-md:15px; --t-lg:16px; --t-xl:24px;
   --lh-tight:1.25; --lh:1.5;
 
   /* legacy names still used inline by a few components */
   --fs-xs:var(--t-xs); --fs-sm:var(--t-sm); --fs-base:var(--t-base); --fs-md:var(--t-base); --fs-lg:var(--t-md);
 
   /* Spacing (4px grid) */
-  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-7:32px; --sp-8:40px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:12px; --sp-5:2px; --sp-6:24px; --sp-7:32px; --sp-8:40px;
 
   /* Radius: small for controls, medium for cards, large for dialogs */
   --r-xs:4px; --r-sm:6px; --r-md:10px; --r-lg:14px; --r-full:999px;
@@ -376,13 +376,26 @@ strong { font-weight:600; }
   display:flex; flex-direction:column; gap:6px; min-width:0; text-align:left;
   padding:var(--sp-3) var(--sp-4) var(--sp-3);
   border:none; border-radius:0; background:none; color:inherit; 
-  transition:background-color var(--dur);
+  transition: background-color var(--dur), opacity var(--dur), filter var(--dur); 
 }
 .ledger-item + .ledger-item { border-left:1px solid var(--border); }
 /*.ledger-item:hover { background:var(--surface-2); }
 .ledger-item:focus-visible { outline-offset:-2px; }*/
 .ledger-item.is-focus { background:color-mix(in srgb, var(--dot-bg) 55%, var(--surface)); }
 /*.ledger-item.is-focus:hover { background:var(--dot-bg); }*/
+.ledger-item.is-silent {
+  opacity: 0.35;
+  filter: grayscale(80%);
+}
+
+.ledger-item.is-silent .ledger-meter {
+  opacity: 0.5;
+}
+
+.ledger-item.is-active {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 2px var(--accent-soft); /* Subtle border highlight */
+}
 .ledger-top { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); }
 .ledger-label { display:flex; align-items:center; gap:6px; font-size:var(--t-xs); font-weight:500; color:var(--ink-2); text-transform:uppercase; letter-spacing:.04em; min-width:0; }
 .ledger-dot { width:7px; height:7px; border-radius:50%; background:var(--dot); flex:none; }
@@ -408,7 +421,7 @@ strong { font-weight:600; }
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent);
 }
 .type-glyph-sm { width:28px; height:28px; font-size:15px; }
-.type-glyph-lg { width:58px; height:58px; font-size:30px; border-radius:var(--r-lg); }
+.type-glyph-lg { width:38px; height:38px; font-size:20px; border-radius:var(--r-lg); }
 .type-glyph[data-tone="amber"]  { --tone:#c2700a; }
 .type-glyph[data-tone="orange"] { --tone:#d9541e; }
 .type-glyph[data-tone="sky"]    { --tone:#0b84c6; }
@@ -930,7 +943,7 @@ body.modal-open { overflow:hidden; }
 /* Expense details */
 .modal-banner {
   display:flex; align-items:flex-start; justify-content:space-between; gap:var(--sp-4);
-  padding:var(--sp-4); margin-bottom:var(--sp-4);
+  padding:var(--sp-3); margin-bottom:var(--sp-3);
   background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-md);
 }
 .banner-main { min-width:0; }
@@ -948,7 +961,7 @@ body.modal-open { overflow:hidden; }
 .reason-box strong { display:block; font-size:var(--t-xs); font-weight:600; margin-bottom:2px; }
 .reason-box.is-approved { background:var(--st-good-bg); color:var(--st-good-ink); border-color:color-mix(in srgb, var(--st-good) 25%, transparent); }
 
-.meta-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--sp-2); margin-bottom:var(--sp-2); }
+.meta-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--sp-2); margin-bottom:var(--sp-3); }
 .meta-card { padding:var(--sp-3); border:1px solid var(--border); border-radius:var(--r-sm); min-width:0; }
 .meta-label { display:flex; align-items:center; gap:6px; font-size:var(--t-xs); color:var(--ink-3); margin-bottom:2px; }
 .meta-value { font-weight:500; overflow-wrap:anywhere; }
@@ -958,7 +971,7 @@ body.modal-open { overflow:hidden; }
 .split-details-layout .section-title { margin-top:var(--sp-5); }
 
 .detail-grid { display:grid; grid-template-columns:1fr 1fr; column-gap:var(--sp-5); }
-.detail-row { display:flex; gap:var(--sp-3); padding:var(--sp-3) 0; border-bottom:1px solid var(--border); min-width:0; }
+.detail-row { display:flex; gap:var(--sp-3); padding:var(--sp-2) 0; border-bottom:1px solid var(--border); min-width:0; }
 .detail-row:only-child, .detail-row:last-child:nth-child(odd) { grid-column:1 / -1; }
 .detail-icon {
   width:28px; height:28px; flex:none; border-radius:var(--r-sm);
@@ -980,7 +993,7 @@ body.modal-open { overflow:hidden; }
 
 /* Activity timeline — a real sequence, so a line connects the steps */
 .timeline { list-style:none; }
-.timeline li { position:relative; padding:0 0 var(--sp-3) var(--sp-6); }
+.timeline li { position:relative; padding:0 0 var(--sp-2) var(--sp-6); }
 .timeline li:last-child { padding-bottom:0; }
 .timeline li:not(:last-child)::before { content:""; position:absolute; left:5px; top:16px; bottom:-2px; width:2px; background:var(--border); }
 .timeline .dot { position:absolute; left:0; top:6px; width:12px; height:12px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); }
@@ -1206,7 +1219,7 @@ body.modal-open { overflow:hidden; }
 @media (max-width:640px) {
    /* 1. Decrease the size of the filter dropdowns */
   .filter select {
-    font-size: 14px;      /* Decreased from 16px */
+    font-size: 9px;      /* Decreased from 16px */
     height: 32px;         /* Slightly shorter */
     padding: 0 26px 0 var(--sp-2); /* Tighter padding */
     background-size: 14px; /* Smaller dropdown arrow */
@@ -1374,10 +1387,41 @@ body.modal-open { overflow:hidden; }
   .gallery-slide .image-preview-pdf { height:68vh; }
   .card-head, .result-meta { padding-left:var(--sp-4); padding-right:var(--sp-4); }
   .tabs { padding:0 var(--sp-2); }
-  .meta-row { grid-template-columns:1fr 1fr; }
-  .meta-row .meta-card:last-child { grid-column:1 / -1; }
-  .modal { padding:var(--sp-3); }
-  .modal-content { padding:var(--sp-4); }
+    /* 1. Force 3 columns on mobile */
+  .meta-row { 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 4px; /* Tighter gap between boxes */
+    margin-bottom: var(--sp-4);
+  }
+  
+  /* 2. Remove the full-width span for the last card */
+  .meta-row .meta-card:last-child { 
+    grid-column: auto; 
+  }
+
+  /* 3. Decrease padding and font sizes to make it fit */
+  .meta-card {
+    padding: 6px 8px; /* Smaller padding */
+  }
+
+  .meta-label {
+    font-size: 10px; /* Smaller label text (Employee, Date) */
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+
+  .meta-label .icon {
+    font-size: 11px; /* Smaller icons */
+  }
+
+  .meta-value {
+    font-size: 9px; /* Smaller value text (Emp3, 07 Nov 2026) */
+    white-space: nowrap; /* Prevent text from wrapping to a new line */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds '...' if the text is too long */
+  }
+  .modal { padding:var(--sp-2); }
+  .modal-content { padding:var(--sp-3); }
   .modal-banner { flex-direction:column; }
   .banner-center { flex-direction:row; align-items:center; justify-content:space-between; width:100%; }
   .hero-figure { font-size:var(--t-lg); }
