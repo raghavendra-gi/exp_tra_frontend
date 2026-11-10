@@ -8,8 +8,7 @@ import ProfilePage from './pages/ProfilePage';
 import CreateEmployeePage from './pages/CreateEmployeePage';
 
 import OpHeadDashboardPage from './pages/OpHeadDashboardPage';
-import HRDashboardPage from './pages/HRDashboardPage';
-
+import AccountsDashboardPage from './pages/AccountsDashboardPage';
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const SelectExpenseTypePage = lazy(() => import('./pages/SelectExpenseTypePage'));
@@ -46,9 +45,9 @@ function AppRoutes() {
 
   prefetchPages(user);
 
-  const home = 
-    user?.role === 'head' ? '/dashboard' : 
-    user?.role === 'hr' ? '/hr-dashboard' : 
+    const home = 
+    user?.role === 'clerk' ? '/dashboard' : 
+    user?.role === 'accounts' ? '/accounts-dashboard' : 
     user?.role === 'op_head' ? '/op-head-dashboard' : 
     user?.role === 'employee' ? '/my' : 
     '/login';
@@ -58,15 +57,15 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to={home} replace /> : <LoginPage />} />
 
-        <Route path="/dashboard" element={user?.role === 'head' ? <DashboardPage /> : <Navigate to={home} replace />} />
-        <Route path="/hr-dashboard" element={user?.role === 'hr' ? <HRDashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/dashboard" element={user?.role === 'clerk' ? <DashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/accounts-dashboard" element={user?.role === 'accounts' ? <AccountsDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/op-head-dashboard" element={user?.role === 'op_head' ? <OpHeadDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/my" element={user?.role === 'employee' ? <DashboardPage /> : <Navigate to={home} replace />} />
 
         {/* 👇 NOW IT IS INSIDE THE <Routes> BLOCK 👇 */}
         <Route 
           path="/employees/new" 
-          element={user?.role === 'hr' ? <CreateEmployeePage /> : <Navigate to={home} replace />} 
+          element={user?.role === 'accounts' ? <CreateEmployeePage /> : <Navigate to={home} replace />} 
         />
 
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />

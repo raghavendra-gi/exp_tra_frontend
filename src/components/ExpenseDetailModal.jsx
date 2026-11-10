@@ -117,6 +117,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
           const style = doc.createElement('style');
           style.innerHTML = `
             .btn-row { display: none !important; }
+            .view-bill-btn { display: none !important; }
             .timeline { page-break-inside: avoid !important; }
             .timeline li { page-break-inside: avoid !important; }
           `;
@@ -143,20 +144,6 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
 
   const headerButtons = (
     <div className="modal-file-buttons" style={{ marginRight: '8px' }}>
-      {attachments.length > 0 && (
-        <button
-          type="button"
-          className={`peek-btn peek-btn-count${ready ? '' : ' is-loading'}`}
-          disabled={!ready}
-          onClick={() => setGalleryStart(0)}
-          title={ready ? `View attachments (${attachments.length})` : 'Loading attachments…'}
-          aria-label={`View ${attachments.length} ${attachments.length === 1 ? 'attachment' : 'attachments'}`}
-        >
-          <svg className="icon" aria-hidden="true"><use href={ready ? '#i-eye' : '#i-spinner'} /></svg>
-          {ready && attachments.length > 1 && <span className="peek-count" aria-hidden="true">{attachments.length}</span>}
-        </button>
-      )}
-
       <button type="button" className="peek-btn" onClick={() => window.print()} title="Print" aria-label="Print">
         <svg className="icon" aria-hidden="true"><use href="#i-print" /></svg>
       </button>
@@ -173,6 +160,23 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
       </button>
     </div>
   );
+
+  // "View bill" button shown under the Details heading
+  const viewBillButton = attachments.length > 0 ? (
+    <button
+      type="button"
+      className={`btn btn-primary view-bill-btn${ready ? '' : ' is-loading'}`}
+      disabled={!ready}
+      onClick={() => setGalleryStart(0)}
+      aria-label={`View ${attachments.length === 1 ? 'bill' : `${attachments.length} bills`}`}
+    >
+      <svg className="icon" aria-hidden="true"><use href={ready ? '#i-receipt' : '#i-spinner'} /></svg>
+      <span>{attachments.length > 1 ? 'View bills' : 'View bill'}</span>
+      {ready && attachments.length > 1 && (
+        <span className="view-bill-count">{attachments.length} files</span>
+      )}
+    </button>
+  ) : null;
 
   const renderDetails = (isSplit) => config.fields.map((f) => {
     if (HIDDEN.includes(f.key) || f.type === 'file' || f.type === 'route') return null;
@@ -286,6 +290,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
           </div>
           <div>
             <div className="section-title">Details</div>
+            {viewBillButton}
             <div className="detail-grid" style={{ gridTemplateColumns: '1fr' }}>
               {renderDetails(true)}
             </div>
@@ -294,6 +299,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
       ) : (
         <>
           <div className="section-title">Details</div>
+          {viewBillButton}
           <div className="detail-grid">{renderDetails(false)}</div>
         </>
       )}

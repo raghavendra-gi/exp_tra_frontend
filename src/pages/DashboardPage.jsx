@@ -217,6 +217,7 @@ export default function DashboardPage() {
             expenses={data.monthAll}
             loading={loading}
             title={`${monthLabel(year, month)} overview`}
+            activeStatus={status} 
           />
 
           {/* ── Calendar + selected day ── */}

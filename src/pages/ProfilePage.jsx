@@ -98,14 +98,14 @@ export default function ProfilePage() {
                   <svg className="icon" aria-hidden="true"><use href="#i-camera" /></svg>
                   <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
                 </label>
-              </div>
+              </div> 
               
               <div className="ph-text">
                 <h2 className="ph-name">
                   {name}
                   <span className="ph-role-badge">{deptLabel}</span>
                 </h2>
-                <p className="ph-id">Employee ID: {formData.employeeId}</p>
+               
               </div>
             </div>
           </div>

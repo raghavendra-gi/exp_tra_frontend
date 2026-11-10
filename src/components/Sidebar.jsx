@@ -4,8 +4,7 @@ import { useAuth } from '../AuthContext';
 import { isApproverRole } from '../utils/format';
 import { readCache, subscribeCache } from '../utils/expenseCache';
 
-const ROLE_LABEL = { head: 'Head', hr: 'HR', op_head: 'Op Head', employee: 'Employee' };
-
+const ROLE_LABEL = { clerk: 'Clerk', accounts: 'Accounts', op_head: 'Op Head', employee: 'Employee' };
 /*
  * Navigation in two groups:
  *   Workspace — dashboard and the full list
@@ -87,8 +86,8 @@ function Sidebar({ isOpen, onClose }) {
             <li>
               <NavLink 
   to={
-    user?.role === 'head' ? '/dashboard' : 
-    user?.role === 'hr' ? '/hr-dashboard' : 
+    user?.role === 'clerk' ? '/dashboard' : 
+    user?.role === 'accounts' ? '/accounts-dashboard' : 
     user?.role === 'op_head' ? '/op-head-dashboard' : 
     '/my'
   } 
@@ -110,7 +109,7 @@ function Sidebar({ isOpen, onClose }) {
 
           <p className="sidebar-section">{isApprover ? 'Review' : 'Status'}</p>
           <ul className="sidebar-menu">
-            {user?.role === 'hr' && (
+            {user?.role === 'accounts' && (
   <li>
     <NavLink to="/employees/new" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
       <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>

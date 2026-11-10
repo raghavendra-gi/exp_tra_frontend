@@ -4,8 +4,8 @@ export const EXPENSE_TYPES = {
 'Pooja': {
     icon: '🙏', title: 'Pooja Expenses',
     fields: [
-      { key: 'items', type: 'checkboxes', label: 'Items / Approvals', required: true, allowOther: true,
-        options: ['Flowers','Agarabathi','Camphor','Haldi','Kunkuma','Cotton Wicks','Sesame oil','Cow Ghee','Chandan Powder'] },
+      /*{ key: 'items', type: 'checkboxes', label: 'Items / Approvals', required: true, allowOther: true,
+        options: ['Flowers','Agarabathi','Camphor','Haldi','Kunkuma','Cotton Wicks','Sesame oil','Cow Ghee','Chandan Powder'] },*/
       { key: 'date',    type: 'date',   label: 'Date', required: true, default: 'today' },
       { key: 'amount',  type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
       { key: 'receipt', type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },

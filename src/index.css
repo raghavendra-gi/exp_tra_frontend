@@ -1454,6 +1454,24 @@ body.modal-open { overflow:hidden; }
 }
 
 /* ── 18. PRINT ─────────────────────────────────────────────────── */
+/* ── "View bill" button inside the expense detail modal ── */
+.view-bill-btn {
+  width: 100%;
+  height: 48px;
+  margin: var(--sp-1) 0 var(--sp-3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.view-bill-btn .icon { width: 20px; height: 20px; }
+.view-bill-btn.is-loading .icon { animation: spin .9s linear infinite; }
+.view-bill-count {
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, .22);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
 @media print {
   :root { --surface:#fff; --bg:#fff; --ink:#000; --ink-2:#333; --ink-3:#555; --border:#ccc; }
   body { background:#fff !important; color:#000 !important; }
