@@ -61,6 +61,7 @@ const STATUS_ICONS = {
   'Pending': 'i-clock',
   'Rejected': 'i-x',
   'In Progress': 'i-route',
+  'Query Raised': 'i-comment',
 };
 export function statusIcon(status) {
   return STATUS_ICONS[status] || 'i-info';

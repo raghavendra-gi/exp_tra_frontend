@@ -25,8 +25,8 @@ import TypeIcon from '../components/TypeIcon';
 const LIST_COUNT = 8;
 const CAT_COUNT = 5;
 const STORE_KEY = 'et.dashboard.view';
-const STATUS_OPTIONS = ['Pending', 'Approved', 'Rejected', 'In Progress'];
-const STATUS_TAB = { 'Pending': 'pending', 'Approved': 'approved', 'Rejected': 'rejected', 'In Progress': 'inprogress' };
+const STATUS_OPTIONS = ['Pending', 'Query Raised', 'Approved', 'Rejected', 'In Progress'];
+const STATUS_TAB = { 'Pending': 'pending', 'Query Raised': 'query', 'Approved': 'approved', 'Rejected': 'rejected', 'In Progress': 'inprogress' };
 const TYPE_OPTIONS = Object.keys(EXPENSE_TYPES);
 
 function initialView() {
@@ -131,9 +131,10 @@ export default function DashboardPage() {
   const subtitle = loading ? '' : isApprover
     ? (data.pendingAll ? `${data.pendingAll} ${data.pendingAll === 1 ? 'request is' : 'requests are'} waiting for your decision` : 'Nothing is waiting for your decision')
     : `Welcome back, ${firstName}`;
-    const headerRight = isApprover ? (
+
+  const headerRight = isApprover ? (
     <div className="btn-row">
-      {user?.role === 'accounts' && (
+      {user && ['accounts', 'clerk', 'op_head'].includes(user.role) && (
         <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees/new')}>
           <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
           <span className="btn-text">Create Employee</span>
@@ -144,7 +145,8 @@ export default function DashboardPage() {
         <span className="btn-text">Review pending</span>
       </button>
     </div>
-  ) : (
+  )
+   : (
     <button className="btn btn-primary btn-sm" onClick={() => navigate('/new')}>
       <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
       <span className="btn-text">New expense</span>
@@ -232,6 +234,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="cal-legend" aria-hidden="true">
                   <span data-status="pending"><i />Pending</span>
+                  <span data-status="queryraised"><i />Query</span>
                   <span data-status="approved"><i />Approved</span>
                   <span data-status="rejected"><i />Rejected</span>
                   <span data-status="inprogress"><i />In progress</span>

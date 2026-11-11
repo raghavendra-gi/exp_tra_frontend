@@ -87,7 +87,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
     if (!Array.isArray(expense.history)) return '';
     for (let i = expense.history.length - 1; i >= 0; i--) {
       const h = expense.history[i];
-      if (/Approved|Rejected/.test(h.action)) return h.note || '';
+      if (/Approved|Rejected|Query/.test(h.action)) return h.note || '';
     }
     return '';
   }, [expense.history]);
@@ -253,6 +253,13 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
         </div>
       )}
 
+      {expense.status === 'Query Raised' && (
+        <div className="reason-box is-query">
+          <strong>Query from {expense.decided_by || 'Accounts'}</strong>
+          {latestNote || 'Please check this request, correct it and resubmit.'}
+        </div>
+      )}
+
       <div className="meta-row">
         <div className="meta-card">
           <div className="meta-label"><svg className="icon" aria-hidden="true"><use href="#i-user" /></svg> Employee</div>
@@ -311,9 +318,10 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
             {expense.history.map((h, i) => {
               const good = /Approved/.test(h.action);
               const bad = /Rejected/.test(h.action);
+              const query = /Query/.test(h.action);
               return (
                 <li key={h.id ?? i}>
-                  <span className={`dot ${good ? 'good' : bad ? 'bad' : ''}`} />
+                  <span className={`dot ${good ? 'good' : bad ? 'bad' : query ? 'query' : ''}`} />
                   <span className="tl-card">
                     <strong className="tl-action">{h.action}</strong>
                     <span className="tl-by">{h.by}</span>
@@ -321,7 +329,8 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
                       className="when"
                       style={good
                         ? { color: 'var(--st-good-ink)', fontWeight: 'bold' }
-                        : bad ? { color: 'var(--st-critical-ink)', fontWeight: 'bold' } : undefined}
+                        : bad ? { color: 'var(--st-critical-ink)', fontWeight: 'bold' }
+                          : query ? { color: 'var(--st-query-ink)', fontWeight: 'bold' } : undefined}
                     >
                       {formatDateTime(h.at)}
                     </span>
@@ -339,7 +348,10 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
             <button className="btn btn-success" onClick={() => onAction('approve', expense)}>
               <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg> Approve
             </button>
-            <button className="btn btn-danger" onClick={() => onAction('reject', expense)}>
+            <button className="btn btn-query" onClick={() => onAction('query', expense)}>
+              <svg className="icon" aria-hidden="true"><use href="#i-comment" /></svg> Raise Query
+            </button>
+            <button className="btn btn-danger" title="Reject and delete this expense" onClick={() => onAction('reject', expense)}>
               <svg className="icon" aria-hidden="true"><use href="#i-x" /></svg> Reject
             </button>
           </>
@@ -357,7 +369,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
                 <svg className="icon" aria-hidden="true"><use href="#i-pencil" /></svg> Edit
               </button>
             )}
-            {expense.status === 'Rejected' && (
+            {(expense.status === 'Rejected' || expense.status === 'Query Raised') && (
               <button className="btn btn-primary" {...needsFull} onClick={() => onAction('resubmit', full)}>
                 <svg className="icon" aria-hidden="true"><use href="#i-copy" /></svg> Fix &amp; resubmit
               </button>

@@ -13,6 +13,7 @@ const PAGE_SIZE = 10;
 const TABS = [
   { key: 'all', label: 'All', status: '' },
   { key: 'pending', label: 'Pending', status: 'Pending' },
+  { key: 'query', label: 'Query', status: 'Query Raised' },
   { key: 'approved', label: 'Approved', status: 'Approved' },
   { key: 'rejected', label: 'Rejected', status: 'Rejected' },
   { key: 'inprogress', label: 'In progress', status: 'In Progress' },
@@ -58,7 +59,7 @@ export default function ExpensesPage() {
 
   // One pass for every tab count, instead of one filter() per tab per render.
   const counts = useMemo(() => {
-    const c = { all: expenses.length, pending: 0, approved: 0, rejected: 0, inprogress: 0 };
+    const c = { all: expenses.length, pending: 0, query: 0, approved: 0, rejected: 0, inprogress: 0 };
     for (const e of expenses) {
       const k = STATUS_TO_TAB[e.status];
       if (k) c[k] += 1;
@@ -105,7 +106,7 @@ export default function ExpensesPage() {
     const byId = new Map(expenses.map((e) => [e.id, e]));
     const ids = [...selectedIds].filter((id) => {
       const e = byId.get(id);
-      return e && e.status !== 'In Progress' && e.status !== status;
+      return e && e.status !== 'In Progress' && e.status !== 'Query Raised' && e.status !== status;
     });
     if (!ids.length) {
       toast('Nothing to update in the selection.', 'info');

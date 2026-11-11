@@ -24,6 +24,7 @@ export function useExpenseActions({ upsert, remove, reload }) {
   const [selected, setSelected] = useState(null);
   const [prompt, setPrompt] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmReject, setConfirmReject] = useState(null);
 
   const openDetail = useCallback((expense) => setSelected(expense), []);
   const closeDetail = useCallback(() => setSelected(null), []);
@@ -40,11 +41,29 @@ export function useExpenseActions({ upsert, remove, reload }) {
     }
   }, [toast, remove]);
 
+  /** "Reject" removes the expense totally. */
+  const doReject = useCallback(async (expense) => {
+    try {
+      await expenseAPI(`/expenses/${expense.id}`, { method: 'DELETE' });
+      toast(`Expense #${expense.id} rejected and removed.`, 'success');
+      setSelected(null);
+      remove(expense.id);
+    } catch (err) {
+      console.error(err);
+      toast(err.message || 'Failed to reject expense.', 'error');
+    }
+  }, [toast, remove]);
+
   const handleAction = useCallback((action, expense) => {
     switch (action) {
       case 'approve':
-      case 'reject':
         setPrompt({ action, expense });
+        return;
+      case 'query':
+        setPrompt({ action: 'query', expense });
+        return;
+      case 'reject':
+        setConfirmReject(expense);
         return;
       case 'edit':
         setSelected(null);
@@ -72,6 +91,22 @@ export function useExpenseActions({ upsert, remove, reload }) {
 
   const submitPrompt = async (comment) => {
     const p = prompt;
+    if (p.action === 'query') {
+      setPrompt(null);
+      try {
+        const updated = await expenseAPI(`/expenses/${p.expense.id}/query`, {
+          method: 'POST',
+          body: JSON.stringify({ reason: comment }),
+        });
+        toast(`Query sent to ${p.expense.employee_name} for request #${p.expense.id}.`, 'info');
+        setSelected(null);
+        if (updated?.id) upsert(updated); else await reload();
+      } catch (err) {
+        console.error(err);
+        toast(err.message || 'Failed to raise query.', 'error');
+      }
+      return;
+    }
     const status = p.action === 'approve' ? 'Approved' : 'Rejected';
     const kind = p.action === 'approve' ? 'success' : 'error';
     setPrompt(null);
@@ -100,6 +135,7 @@ export function useExpenseActions({ upsert, remove, reload }) {
   };
 
   const isApprove = prompt?.action === 'approve';
+  const isQuery = prompt?.action === 'query';
   const elements = (
     <>
       {selected && (
@@ -110,17 +146,17 @@ export function useExpenseActions({ upsert, remove, reload }) {
         isOpen={!!prompt}
         title={prompt?.bulk
           ? (isApprove ? 'Approve selected' : 'Reject selected')
-          : (isApprove ? 'Approve expense' : 'Reject expense')}
+          : isQuery ? 'Raise query' : (isApprove ? 'Approve expense' : 'Reject expense')}
         body={prompt?.bulk
           ? `This comment will apply to ${prompt.count} selected expense${prompt.count === 1 ? '' : 's'}.`
           : prompt
-            ? `Request #${prompt.expense.id}: ${prompt.expense.type} from ${prompt.expense.employee_name}, ${formatMoney(prompt.expense.data?.amount)}`
+            ? `Request #${prompt.expense.id}: ${prompt.expense.type} from ${prompt.expense.employee_name}, ${formatMoney(prompt.expense.data?.amount)}${isQuery ? '. The employee will see your comment, fix the expense and resubmit it.' : ''}`
             : ''}
-        inputLabel={isApprove ? 'Approval comments' : 'Reason for rejection'}
-        placeholder={isApprove ? 'Write your approval comments here' : 'Write the reason for rejection'}
+        inputLabel={isQuery ? 'What does the employee need to correct?' : isApprove ? 'Approval comments' : 'Reason for rejection'}
+        placeholder={isQuery ? 'e.g. The bill is not clear. Upload a clear copy showing the GST number.' : isApprove ? 'Write your approval comments here' : 'Write the reason for rejection'}
         required
-        okLabel={isApprove ? 'Approve' : 'Reject'}
-        okClass={isApprove ? 'btn-success' : 'btn-danger'}
+        okLabel={isQuery ? 'Raise query' : isApprove ? 'Approve' : 'Reject'}
+        okClass={isQuery ? 'btn-query' : isApprove ? 'btn-success' : 'btn-danger'}
         onCancel={() => setPrompt(null)}
         onSubmit={submitPrompt}
       />
@@ -136,6 +172,20 @@ export function useExpenseActions({ upsert, remove, reload }) {
           const exp = confirmDelete;
           setConfirmDelete(null);
           doDelete(exp);
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={!!confirmReject}
+        title={`Reject request #${confirmReject?.id}?`}
+        body={`This permanently deletes the ${confirmReject?.type} expense from ${confirmReject?.employee_name}, with its attachments and history. It cannot be undone. If the bill only needs a correction, use Raise Query instead.`}
+        okLabel="Reject & delete"
+        okClass="btn-danger"
+        onCancel={() => setConfirmReject(null)}
+        onConfirm={() => {
+          const exp = confirmReject;
+          setConfirmReject(null);
+          doReject(exp);
         }}
       />
     </>

@@ -7,6 +7,77 @@ const MIN_CHARS = 3;
 /** Normalise Google's "FormattableText | string" into a plain string. */
 const text = (v) => (!v ? '' : typeof v === 'string' ? v : typeof v.text === 'string' ? v.text : String(v));
 
+/* ── "Use my current location" helpers ───────────────────────────────────── */
+
+/** Position from the browser. Laptops have no GPS, so if the precise fix is slow or
+ *  unavailable, accept an approximate one (Wi-Fi / network) instead of failing. */
+function getPosition() {
+  const ask = (opts) => new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, opts));
+  return ask({ enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }).catch((err) => {
+    if (err?.code === 2 || err?.code === 3) {
+      return ask({ enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+    }
+    throw err;
+  });
+}
+
+const withTimeout = (promise, ms, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), ms)),
+]);
+
+/** 1st choice: Google. Needs Geocoding API + billing on the key, so it can fail. */
+async function googleAddress(lat, lng) {
+  const maps = await loadGoogleMaps();
+  const geocoding = await maps.importLibrary('geocoding');
+  const res = await new geocoding.Geocoder().geocode({ location: { lat, lng } });
+  return res?.results?.[0]?.formatted_address || '';
+}
+
+/** Short, readable address from an OpenStreetMap (Nominatim) result. */
+function formatOsmAddress(d) {
+  const a = d?.address || {};
+  const street = [a.house_number, a.road].filter(Boolean).join(' ');
+  const area = a.neighbourhood || a.suburb || a.quarter || a.city_district;
+  const city = a.city || a.town || a.village || a.municipality || a.county || a.state_district;
+  const parts = [street, area, city, a.state, a.postcode].filter(Boolean);
+  const unique = parts.filter((p, i) => p !== parts[i - 1]);
+  return unique.length ? unique.join(', ') : (d?.display_name || '');
+}
+
+/** 2nd choice: free OpenStreetMap lookup. Needs no key and no billing. */
+async function osmAddress(lat, lng) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18'
+      + `&accept-language=en&lat=${lat}&lon=${lng}`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`OpenStreetMap lookup failed (${r.status})`);
+    return formatOsmAddress(await r.json());
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Address text for a position: Google, else OpenStreetMap, else '' (caller uses coordinates). */
+async function addressFor(lat, lng) {
+  try {
+    const a = await withTimeout(googleAddress(lat, lng), 8000, 'Google');
+    if (a) return a;
+  } catch (e) {
+    console.warn('[PlaceInput] Google reverse-geocode unavailable, trying OpenStreetMap:', e?.code || e?.message || e);
+  }
+  try {
+    const a = await osmAddress(lat, lng);
+    if (a) return a;
+  } catch (e) {
+    console.warn('[PlaceInput] OpenStreetMap reverse-geocode failed:', e?.message || e);
+  }
+  return '';
+}
+
 /**
  * Place field with Google Places autocomplete.
  *
@@ -171,28 +242,26 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
     if (!navigator.geolocation || locating) return;
     setLocating(true);
     try {
-      const pos = await new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true, timeout: 10000, maximumAge: 60000,
-        }));
-      const maps = await loadGoogleMaps();
-      const geocoding = await maps.importLibrary('geocoding');
-      const res = await new geocoding.Geocoder().geocode({
-        location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-      });
-      const best = res?.results?.[0];
-      if (!best) throw new Error('no match');
-      onChange(field.key, best.formatted_address);
+      const pos = await getPosition();
+      const { latitude: lat, longitude: lng } = pos.coords;
+      const address = await addressFor(lat, lng);
+
       setSuggestions([]);
       setIsOpen(false);
-      toast('Location set to where you are now.', 'success', { duration: 2500 });
+      if (address) {
+        onChange(field.key, address);
+        toast('Location set to where you are now.', 'success', { duration: 2500 });
+      } else {
+        // We have the position but no address name: fill the coordinates so the person is not stuck.
+        onChange(field.key, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        toast('Found your position but could not get the address name, so the coordinates were filled in. You can edit it.', 'warn');
+      }
     } catch (e) {
       console.error('[PlaceInput] geolocate failed:', e);
       let msg = 'Could not read your location. Please type it in instead.';
       if (e?.code === 1) msg = 'Location permission is blocked. Allow it in your browser settings, or type it in.';
       else if (e?.code === 2) msg = 'Your device could not determine its position. Check that location services are on.';
       else if (e?.code === 3) msg = 'Getting your location timed out. Try again or type it in.';
-      else if (e?.code === 'REQUEST_DENIED' || /geocod/i.test(e?.message || '')) msg = 'Google Geocoding is not enabled for this API key.';
       toast(msg, 'warn');
     } finally {
       setLocating(false);

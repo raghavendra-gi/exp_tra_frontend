@@ -45,11 +45,14 @@ function AppRoutes() {
 
   prefetchPages(user);
 
-    const home = 
-    user?.role === 'clerk' ? '/dashboard' : 
-    user?.role === 'accounts' ? '/accounts-dashboard' : 
-    user?.role === 'op_head' ? '/op-head-dashboard' : 
-    user?.role === 'employee' ? '/my' : 
+  // Where each role lands after sign-in. A signed-in user with any other
+  // (e.g. retired) role goes to /expenses instead of bouncing between /login and itself.
+  const home =
+    user?.role === 'clerk' ? '/dashboard' :
+    user?.role === 'accounts' ? '/accounts-dashboard' :
+    user?.role === 'op_head' ? '/op-head-dashboard' :
+    user?.role === 'employee' ? '/my' :
+    user ? '/expenses' :
     '/login';
 
   return (
@@ -62,11 +65,14 @@ function AppRoutes() {
         <Route path="/op-head-dashboard" element={user?.role === 'op_head' ? <OpHeadDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/my" element={user?.role === 'employee' ? <DashboardPage /> : <Navigate to={home} replace />} />
 
-        {/* 👇 NOW IT IS INSIDE THE <Routes> BLOCK 👇 */}
-        <Route 
-          path="/employees/new" 
-          element={user?.role === 'accounts' ? <CreateEmployeePage /> : <Navigate to={home} replace />} 
-        />
+        <Route
+  path="/employees/new"
+  element={
+    user && ['accounts', 'clerk', 'op_head'].includes(user.role) 
+      ? <CreateEmployeePage /> 
+      : <Navigate to={home} replace />
+  }
+/>
 
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />

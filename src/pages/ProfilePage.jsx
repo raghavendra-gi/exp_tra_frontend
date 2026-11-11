@@ -2,29 +2,35 @@ import { useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { useToast } from '../context/ToastContext';
 import { expenseAPI } from '../api/client';
-import { fileToDataUrl } from '../utils/fileUtils'; // Make sure this is imported
+import { fileToDataUrl } from '../utils/fileUtils';
 import Layout from '../components/Layout';
 
+const ROLE_LABELS = {
+  employee: 'Employee',
+  clerk: 'Clerk',
+  accounts: 'Accounts',
+  op_head: 'Operational Head',
+};
+
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth(); // Get updateUser
+  const { user, updateUser } = useAuth();
   const toast = useToast();
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     username: user?.username || '',
     employeeId: user?.employee_id || user?.id || '',
     branch: user?.branch || '',
     designation: user?.designation || '',
     email: user?.email || user?.mail || '',
-    avatar: user?.avatar || '', // Add avatar to state
+    avatar: user?.avatar || '',
   });
 
   const name = user?.display_name || user?.username || 'User';
   const initials = name.substring(0, 2).toUpperCase();
-  const roleLabel = user?.role === 'head' ? 'Head' : user?.role === 'hr' ? 'HR' : 'Employee';
-  const deptLabel = user?.role === 'head' ? 'Department Head' : roleLabel;
+  const roleLabel = ROLE_LABELS[user?.role] || 'Employee';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,15 +53,16 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // 1. Send data to backend
+      // The username is the login name and cannot be changed, so it is not sent.
+      const { username, employeeId, ...editable } = formData; // eslint-disable-line no-unused-vars
       const updatedUser = await expenseAPI('/users/profile', {
         method: 'PUT',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(editable),
       });
-      
-      // 2. Update global context so it persists on refresh
+
+      // Update global context so it persists on refresh
       updateUser(updatedUser);
-      
+
       toast('Profile updated successfully.', 'success');
       setIsEditing(false);
     } catch (err) {
@@ -69,10 +76,10 @@ export default function ProfilePage() {
     <Layout title="My Profile" subtitle="Manage your account information">
       <div className="profile-wrapper">
         <div className="profile-main-card">
-          
+
           <div className="profile-header-gradient">
             <div className="ph-top-row">
-              <span className="ph-badge">EMPLOYEE ACCOUNT</span>
+              <span className="ph-badge">{roleLabel.toUpperCase()} ACCOUNT</span>
               {!isEditing ? (
                 <button className="btn btn-sm ph-edit-btn" onClick={() => setIsEditing(true)}>
                   <svg className="icon" aria-hidden="true"><use href="#i-pencil" /></svg> Edit Profile
@@ -84,7 +91,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            
+
             <div className="ph-main-row">
               <div className="ph-avatar-wrap">
                 {/* Show image if exists, otherwise initials */}
@@ -93,19 +100,18 @@ export default function ProfilePage() {
                 ) : (
                   <div className="avatar ph-avatar">{initials}</div>
                 )}
-                
+
                 <label className="ph-avatar-camera" title="Upload Profile Picture">
                   <svg className="icon" aria-hidden="true"><use href="#i-camera" /></svg>
                   <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
                 </label>
-              </div> 
-              
+              </div>
+
               <div className="ph-text">
                 <h2 className="ph-name">
                   {name}
-                  <span className="ph-role-badge">{deptLabel}</span>
+                  <span className="ph-role-badge">{roleLabel}</span>
                 </h2>
-               
               </div>
             </div>
           </div>
@@ -133,11 +139,7 @@ export default function ProfilePage() {
             <div className="pi-grid">
               <div className="pi-field">
                 <label>Username</label>
-                {isEditing ? (
-                  <input type="text" name="username" value={formData.username} onChange={handleChange} className="input" />
-                ) : (
-                  <div className="pi-value-box">{formData.username || '—'}</div>
-                )}
+                <div className="pi-value-box">{formData.username || '—'}</div>
               </div>
 
               <div className="pi-field">
@@ -164,7 +166,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-          
+
         </div>
       </div>
     </Layout>

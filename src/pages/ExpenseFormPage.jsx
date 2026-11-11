@@ -237,6 +237,11 @@ function ExpenseForm() {
   const startLocation = editingExpense?.data?.startLocation || '';
   const showTripSummary = config.twoStage && currentStage === 'end';
 
+  // Why it came back: the rejection reason, or the latest query comment from Accounts.
+  const flaggedReason = editingExpense?.rejection_reason
+    || [...(editingExpense?.history || [])].reverse().find((h) => /Query|Rejected/.test(h.action))?.note
+    || '';
+
   const renderField = (field) => (
     <div key={field.key} className={`field field-${field.type}${WIDE_TYPES.has(field.type) ? ' span-2' : ''}`}>
       <FieldRenderer
@@ -265,10 +270,10 @@ function ExpenseForm() {
           </div>
         </div>
 
-        {resubmitMode && editingExpense?.rejection_reason && (
+        {resubmitMode && flaggedReason && (
           <div className="form-banner banner-warn">
             <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg>
-            <span>Fix what was flagged and resubmit. Reason: “{editingExpense.rejection_reason}”</span>
+            <span>Fix what was flagged and resubmit. Reason: “{flaggedReason}”</span>
           </div>
         )}
 

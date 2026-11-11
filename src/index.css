@@ -371,7 +371,7 @@ strong { font-weight:600; }
   background: color-mix(in srgb, var(--on-accent) 40%, transparent); /* Light separator */
 }
 
-.ledger-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); }
+.ledger-grid { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); }
 .ledger-item {
   display:flex; flex-direction:column; gap:6px; min-width:0; text-align:left;
   padding:var(--sp-3) var(--sp-4) var(--sp-3);
@@ -411,6 +411,14 @@ strong { font-weight:600; }
 [data-status="approved"]   { --dot:var(--st-good);     --dot-bg:var(--st-good-bg); }
 [data-status="rejected"]   { --dot:var(--st-critical); --dot-bg:var(--st-critical-bg); }
 [data-status="inprogress"] { --dot:var(--st-info);     --dot-bg:var(--st-info-bg); }
+[data-status="queryraised"], [data-status="query"] { --dot:var(--st-query); --dot-bg:var(--st-query-bg); }
+
+/* "Query Raised" status colour (purple) */
+:root { --st-query:#7c3aed; --st-query-ink:#5b21b6; --st-query-bg:#f1ebfe; --on-query:#fff; }
+:root[data-theme="dark"] { --st-query:#a78bfa; --st-query-ink:#c4b5fd; --st-query-bg:#241b3d; --on-query:#14092e; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --st-query:#a78bfa; --st-query-ink:#c4b5fd; --st-query-bg:#241b3d; --on-query:#14092e; }
+}
 
 /* ── 7a. CATEGORY ICONS ─────────────────────────────────────────── */
 .type-glyph {
@@ -563,6 +571,8 @@ strong { font-weight:600; }
 .btn-success:hover:not([disabled]) { filter:brightness(.93); }
 .btn-danger { background:var(--st-critical); color:#fff; }
 .btn-danger:hover:not([disabled]) { filter:brightness(.93); }
+.btn-query { background:var(--st-query); color:var(--on-query); }
+.btn-query:hover:not([disabled]) { filter:brightness(.93); }
 .btn-ghost { background:transparent; color:var(--accent-ink); }
 .btn-ghost:hover:not([disabled]) { background:var(--accent-soft); }
 .btn-ghost-danger { color:var(--st-critical-ink); }
@@ -851,6 +861,7 @@ strong { font-weight:600; }
 .badge-pending    { background:var(--st-warning-bg);  color:var(--st-warning-ink); }
 .badge-rejected   { background:var(--st-critical-bg); color:var(--st-critical-ink); }
 .badge-inprogress { background:var(--st-info-bg);     color:var(--st-info-ink); }
+.badge-queryraised { background:var(--st-query-bg);  color:var(--st-query-ink); }
 
 .empty-row td { padding:0 !important; }
 .empty-state { text-align:center; padding:var(--sp-8) var(--sp-4); }
@@ -959,6 +970,7 @@ body.modal-open { overflow:hidden; }
   border:1px solid color-mix(in srgb, var(--st-critical) 25%, transparent); border-radius:var(--r-sm);
 }
 .reason-box strong { display:block; font-size:var(--t-xs); font-weight:600; margin-bottom:2px; }
+.reason-box.is-query { background:var(--st-query-bg); color:var(--st-query-ink); border-color:color-mix(in srgb, var(--st-query) 30%, transparent); }
 .reason-box.is-approved { background:var(--st-good-bg); color:var(--st-good-ink); border-color:color-mix(in srgb, var(--st-good) 25%, transparent); }
 
 .meta-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--sp-2); margin-bottom:var(--sp-3); }
@@ -999,6 +1011,7 @@ body.modal-open { overflow:hidden; }
 .timeline .dot { position:absolute; left:0; top:6px; width:12px; height:12px; border-radius:50%; background:var(--surface); border:2px solid var(--accent); }
 .timeline .dot.good { border-color:var(--st-good); background:var(--st-good); }
 .timeline .dot.bad  { border-color:var(--st-critical); background:var(--st-critical); }
+.timeline .dot.query { border-color:var(--st-query); background:var(--st-query); }
 .timeline .tl-card { display:flex; flex-direction:column; gap:1px; }
 .tl-action { font-weight:500; }
 .tl-by { color:var(--ink-2); font-size:var(--t-sm); }
@@ -1205,7 +1218,7 @@ body.modal-open { overflow:hidden; }
 }
 @media (max-width:900px) {
   .ledger-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .ledger-item:nth-child(3) { border-left:none; }
+  .ledger-item:nth-child(odd) { border-left:none; }
   .ledger-item:nth-child(n+3) { border-top:1px solid var(--border); }
 }
 @media (max-width:768px) {
