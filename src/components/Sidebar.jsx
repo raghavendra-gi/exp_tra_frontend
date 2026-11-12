@@ -20,9 +20,10 @@ function Sidebar({ isOpen, onClose }) {
 
   const list = useSyncExternalStore(subscribeCache, () => readCache(user?.username || null));
   const counts = useMemo(() => {
-    const c = { pending: 0, rejected: 0, inprogress: 0, approved: 0 };
+    const c = { pending: 0, query: 0, rejected: 0, inprogress: 0, approved: 0 };
     for (const e of list || []) {
       if (e.status === 'Pending') c.pending += 1;
+      else if (e.status === 'Query Raised') c.query += 1;
       else if (e.status === 'Rejected') c.rejected += 1;
       else if (e.status === 'In Progress') c.inprogress += 1;
       else if (e.status === 'Approved') c.approved += 1;
@@ -49,16 +50,18 @@ function Sidebar({ isOpen, onClose }) {
   const tab = location.state?.tab;
 
   // "All/My expenses" is active on the list unless a queue shortcut opened it.
-  const listLink = ({ isActive }) => (isActive && !['pending', 'rejected', 'inprogress', 'approved'].includes(tab) ? 'active' : undefined);
+  const listLink = ({ isActive }) => (isActive && !['pending', 'query', 'rejected', 'inprogress', 'approved'].includes(tab) ? 'active' : undefined);
 
   const queues = isApprover
     ? [
       { tab: 'pending', label: 'Awaiting review', icon: 'i-inbox', n: counts.pending, tone: 'warning' },
+      { tab: 'query', label: 'Query raised', icon: 'i-comment', n: counts.query },
       { tab: 'approved', label: 'Approved', icon: 'i-check', n: counts.approved },
       { tab: 'rejected', label: 'Rejected', icon: 'i-x', n: counts.rejected },
     ]
     : [
       { tab: 'pending', label: 'Awaiting approval', icon: 'i-inbox', n: counts.pending },
+      { tab: 'query', label: 'Query from Accounts', icon: 'i-comment', n: counts.query, tone: 'critical' },
       { tab: 'inprogress', label: 'Active trips', icon: 'i-route', n: counts.inprogress, tone: 'info' },
       { tab: 'rejected', label: 'Needs fixing', icon: 'i-alert', n: counts.rejected, tone: 'critical' },
     ];
@@ -109,7 +112,7 @@ function Sidebar({ isOpen, onClose }) {
 
           <p className="sidebar-section">{isApprover ? 'Review' : 'Status'}</p>
           <ul className="sidebar-menu">
-                        {user && ['accounts', 'clerk', 'op_head'].includes(user.role) && (
+            {user?.role === 'accounts' && (
   <li>
     <NavLink to="/employees/new" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
       <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
@@ -117,6 +120,14 @@ function Sidebar({ isOpen, onClose }) {
     </NavLink>
   </li>
 )}
+            {isApprover && (
+              <li>
+                <NavLink to="/locations" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+                  <svg className="icon" aria-hidden="true"><use href="#i-pin" /></svg>
+                  <span className="sidebar-label">Location log</span>
+                </NavLink>
+              </li>
+            )}
             {queues.map((q) => (
               <li key={q.tab}>
                 <Link

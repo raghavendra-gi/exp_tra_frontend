@@ -1003,6 +1003,17 @@ body.modal-open { overflow:hidden; }
 .rd-map-link { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; font-size:var(--t-sm); font-weight:500; color:var(--accent-ink); text-decoration:none; }
 .rd-map-link:hover { text-decoration:underline; }
 
+/* ── Captured location (expense detail modal) ── */
+.geo-list { display:flex; flex-direction:column; gap:var(--sp-2); }
+.geo-item { display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3); border:1px solid var(--border); border-radius:var(--r-sm); min-width:0; }
+.geo-icon { color:var(--ink-3); flex-shrink:0; }
+.geo-text { flex:1; min-width:0; overflow-wrap:anywhere; }
+.geo-label { font-weight:600; }
+.geo-address { color:var(--ink-2); }
+.geo-meta { color:var(--ink-3); font-size:var(--t-sm); }
+.geo-link { flex-shrink:0; }
+@media (max-width:640px) { .geo-item { flex-wrap:wrap; } .geo-link { width:100%; } }
+
 /* Activity timeline — a real sequence, so a line connects the steps */
 .timeline { list-style:none; }
 .timeline li { position:relative; padding:0 0 var(--sp-2) var(--sp-6); }

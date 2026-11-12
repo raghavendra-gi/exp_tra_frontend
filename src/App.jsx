@@ -13,6 +13,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const SelectExpenseTypePage = lazy(() => import('./pages/SelectExpenseTypePage'));
 const ExpenseFormPage = lazy(() => import('./pages/ExpenseFormPage'));
+const LocationLogPage = lazy(() => import('./pages/LocationLogPage'));
 
 let prefetched = false;
 function prefetchPages(user) {
@@ -65,14 +66,14 @@ function AppRoutes() {
         <Route path="/op-head-dashboard" element={user?.role === 'op_head' ? <OpHeadDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/my" element={user?.role === 'employee' ? <DashboardPage /> : <Navigate to={home} replace />} />
 
+        {/* Only the Accounts team can create users (the backend enforces this too). */}
         <Route
-  path="/employees/new"
-  element={
-    user && ['accounts', 'clerk', 'op_head'].includes(user.role) 
-      ? <CreateEmployeePage /> 
-      : <Navigate to={home} replace />
-  }
-/>
+          path="/employees/new"
+          element={user?.role === 'accounts' ? <CreateEmployeePage /> : <Navigate to={home} replace />}
+        />
+
+        {/* Approvers only: where employees captured their location with an expense. */}
+        <Route path="/locations" element={isApproverRole(user) ? <LocationLogPage /> : <Navigate to={home} replace />} />
 
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />

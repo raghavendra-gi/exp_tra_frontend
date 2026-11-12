@@ -6,6 +6,7 @@ import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import Modal from './Modal';
 import { formatDate, formatDateTime, formatMoney, statusBadgeClass, statusIcon, isApproverRole } from '../utils/format';
 import TypeIcon from './TypeIcon';
+import CapturedLocations from './CapturedLocations';
 
 // 👇 IMPORT THE NEW MODERN LIBRARIES 👇
 import html2canvas from 'html2canvas-pro';
@@ -310,6 +311,8 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
           <div className="detail-grid">{renderDetails(false)}</div>
         </>
       )}
+
+      <CapturedLocations data={data} fields={config.fields} />
 
       {Array.isArray(expense.history) && expense.history.length > 0 && (
         <>

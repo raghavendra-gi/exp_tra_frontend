@@ -29,6 +29,22 @@ const STATUS_OPTIONS = ['Pending', 'Query Raised', 'Approved', 'Rejected', 'In P
 const STATUS_TAB = { 'Pending': 'pending', 'Query Raised': 'query', 'Approved': 'approved', 'Rejected': 'rejected', 'In Progress': 'inprogress' };
 const TYPE_OPTIONS = Object.keys(EXPENSE_TYPES);
 
+// The login token is not necessarily stored under the key "token".
+// Check the common names in both storages (and unwrap JSON if needed).
+// If yours is different, add its name to this list.
+const TOKEN_KEYS = ['token', 'access_token', 'accessToken', 'authToken', 'jwt', 'et.token', 'et_token'];
+function getAuthToken() {
+  for (const store of [localStorage, sessionStorage]) {
+    for (const k of TOKEN_KEYS) {
+      let v = store.getItem(k);
+      if (!v) continue;
+      try { const j = JSON.parse(v); v = typeof j === 'string' ? j : (j?.access_token || j?.token || v); } catch { /* plain string */ }
+      if (v) return v;
+    }
+  }
+  return '';
+}
+
 function initialView() {
   const now = new Date();
   const base = { year: now.getFullYear(), month: now.getMonth(), status: '', type: '', employee: '', day: todayKey() };
@@ -51,6 +67,73 @@ export default function DashboardPage() {
   const { year, month, status, type, employee, day } = view;
   const patch = useCallback((p) => setView((v) => ({ ...v, ...p })), []);
   const [allCats, setAllCats] = useState(false);
+
+  // ── Monthly fund (per employee) ──
+  const API = 'http://127.0.0.1:8000/api/expenses';
+  const [fundData, setFundData] = useState({ total_fund: 0, spent_amount: 0, remaining_amount: 0 });
+  const [isFundModalOpen, setIsFundModalOpen] = useState(false);
+  const [fundInput, setFundInput] = useState('');
+  const [fundEmployee, setFundEmployee] = useState('');   // username picked in the modal
+  const [fundEmployees, setFundEmployees] = useState([]); // [{ username, display_name }]
+
+  // The dashboard's employee filter holds a display name; the fund API wants the username.
+  const filterUsername = useMemo(() => {
+    if (!employee) return '';
+    const hit = (expenses || []).find((x) => x.employee_name === employee);
+    return hit ? hit.employee_id : '';
+  }, [expenses, employee]);
+
+  const fetchFund = useCallback(async () => {
+    try {
+      // month is 0-indexed in JS, so we add 1 for the backend.
+      // Employees always get their own numbers (the server enforces it);
+      // approvers get everyone combined, or the one employee picked in the filter.
+      const qs = new URLSearchParams({ year, month: month + 1 });
+      if (isApprover && filterUsername) qs.set('employee', filterUsername);
+      const res = await fetch(`${API}/fund?${qs}`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
+      if (res.ok) setFundData(await res.json());
+    } catch (err) {
+      console.error('Failed to fetch fund data', err);
+    }
+  }, [year, month, isApprover, filterUsername]);
+
+  useEffect(() => { fetchFund(); }, [fetchFund, expenses]); // re-runs when an expense is approved
+
+  const openFundModal = async () => {
+    setFundInput('');
+    setFundEmployee(filterUsername || '');
+    setIsFundModalOpen(true);
+    try {
+      const res = await fetch(`${API}/fund/employees`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
+      if (res.ok) setFundEmployees(await res.json());
+    } catch (err) {
+      console.error('Failed to load employees', err);
+    }
+  };
+
+  const handleSaveFund = async () => {
+    if (!fundEmployee) { alert('Please select an employee.'); return; }
+    const amount = parseFloat(fundInput);
+    if (!fundInput || isNaN(amount) || amount < 0) { alert('Please enter a valid amount for the fund.'); return; }
+
+    try {
+      const res = await fetch(`${API}/fund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ employee_id: fundEmployee, year, month: month + 1, amount }),
+      });
+      if (res.ok) {
+        setIsFundModalOpen(false);
+        fetchFund();
+      } else {
+        const text = await res.text();
+        alert(`Error ${res.status}: ${text}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`Request failed: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     try { sessionStorage.setItem(STORE_KEY, JSON.stringify(view)); } catch { /* ignore */ }
@@ -131,13 +214,20 @@ export default function DashboardPage() {
   const subtitle = loading ? '' : isApprover
     ? (data.pendingAll ? `${data.pendingAll} ${data.pendingAll === 1 ? 'request is' : 'requests are'} waiting for your decision` : 'Nothing is waiting for your decision')
     : `Welcome back, ${firstName}`;
-        const headerRight = isApprover ? (
+    
+  const headerRight = isApprover ? (
     <div className="btn-row">
-      {user && ['accounts', 'clerk', 'op_head'].includes(user.role) && (
-        <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees/new')}>
-          <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
-          <span className="btn-text">Create Employee</span>
-        </button>
+      {user?.role === 'accounts' && (
+        <>
+          <button className="btn btn-outline btn-sm" onClick={openFundModal}>
+            <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+            <span className="btn-text">Set Monthly Fund</span>
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees/new')}>
+            <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
+            <span className="btn-text">Create Employee</span>
+          </button>
+        </>
       )}
       <button className="btn btn-primary btn-sm" onClick={() => navigate('/expenses', { state: { tab: 'pending' } })}>
         <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg>
@@ -219,6 +309,31 @@ export default function DashboardPage() {
             title={`${monthLabel(year, month)} overview`}
             activeStatus={status} 
           />
+
+          <div className="card mb-4" style={{ padding: '16px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #3b82f6' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1rem', color: '#1e293b' }}>Monthly Budget Overview</h3>
+              <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>{isApprover
+                  ? (employee ? `${employee} · fund for ${monthLabel(year, month)}` : `All employees · fund for ${monthLabel(year, month)}`)
+                  : `Your fund for ${monthLabel(year, month)}`}</p>
+            </div>
+            <div style={{ display: 'flex', gap: '32px', textAlign: 'right' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Total Fund</span>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{formatMoney(fundData.total_fund)}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Approved Spent</span>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#ef4444' }}>{formatMoney(fundData.spent_amount)}</div>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Remaining Fund</span>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: fundData.remaining_amount < 0 ? '#ef4444' : '#10b981' }}>
+                  {formatMoney(fundData.remaining_amount)}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* ── Calendar + selected day ── */}
           <div className="dash-grid">
@@ -347,6 +462,38 @@ export default function DashboardPage() {
             </section>
           </div>
         </>
+      )}
+
+            {/* ── NEW: Set Fund Modal ── */}
+      {isFundModalOpen && (
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div className="card" style={{ width: '400px', padding: '24px' }}>
+            <h2 style={{ marginTop: 0 }}>Set Monthly Fund</h2>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Choose an employee and enter the budget allocated to them for {monthLabel(year, month)}.</p>
+            <select
+              value={fundEmployee}
+              onChange={(e) => setFundEmployee(e.target.value)}
+              style={{ width: '100%', marginBottom: '12px', padding: '8px' }}
+            >
+              <option value="">Select employee…</option>
+              {fundEmployees.map((u) => (
+                <option key={u.username} value={u.username}>{u.display_name} ({u.username})</option>
+              ))}
+            </select>
+            <input 
+              type="number" 
+              className="input" 
+              value={fundInput} 
+              onChange={e => setFundInput(e.target.value)} 
+              placeholder="e.g. 50000" 
+              style={{ width: '100%', marginBottom: '16px', padding: '8px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setIsFundModalOpen(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveFund}>Save Fund</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {actions.elements}

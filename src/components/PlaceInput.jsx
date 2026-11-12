@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadGoogleMaps } from '../utils/mapsLoader';
 import { useToast } from '../context/ToastContext';
+import { formatAccuracy } from '../utils/geo';
 
 const MIN_CHARS = 3;
 
@@ -98,6 +99,15 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState('idle');   // idle | error
   const [locating, setLocating] = useState(false);
+  // The saved location lives in the form data under "<field>Geo" (e.g. fromGeo); see utils/geo.js
+  const geoKey = `${field.key}Geo`;
+  const [geoNote, setGeoNote] = useState('');
+  /** The text no longer matches the captured point, so forget the point. */
+  const dropGeo = () => {
+    if (!field.geolocate) return;
+    onChange(geoKey, null);
+    setGeoNote('');
+  };
 
   const placesRef = useRef(null);      // the Places library, once loaded
   const legacyRef = useRef(null);      // classic AutocompleteService instance
@@ -205,12 +215,14 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
   const handleInputChange = (e) => {
     const val = e.target.value;
     onChange(field.key, val);
+    dropGeo();
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val.trim()), 260);
   };
 
   const chooseSuggestion = (s) => {
     onChange(field.key, s.full);
+    dropGeo();
     setSuggestions([]);
     setIsOpen(false);
     setActiveIndex(-1);
@@ -256,6 +268,11 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
         onChange(field.key, `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         toast('Found your position but could not get the address name, so the coordinates were filled in. You can edit it.', 'warn');
       }
+
+      // Save the point itself with the expense, so approvers can see where it was captured.
+      const accuracy = Number.isFinite(pos.coords.accuracy) ? Math.round(pos.coords.accuracy) : null;
+      onChange(geoKey, { lat, lng, accuracy, at: new Date().toISOString() });
+      setGeoNote(`Your current location${accuracy != null ? ` (${formatAccuracy(accuracy)})` : ''} will be saved with this expense.`);
     } catch (e) {
       console.error('[PlaceInput] geolocate failed:', e);
       let msg = 'Could not read your location. Please type it in instead.';
@@ -295,7 +312,7 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
             className={`place-geo${locating ? ' is-busy' : ''}`}
             onClick={useCurrentLocation}
             disabled={locating}
-            title="Use my current location"
+            title="Use my current location (it is saved with this expense)"
             aria-label="Use my current location"
           >
             <svg className="icon"><use href="#i-crosshair" /></svg>
@@ -328,6 +345,8 @@ export default function PlaceInput({ id, field, value, onChange, placeholder }) 
           <li className="ps-attrib" aria-hidden="true">Powered by Google</li>
         </ul>
       )}
+
+      {geoNote && <div className="field-hint" role="status">{geoNote}</div>}
 
       {status === 'error' && (
         <div className="field-hint" style={{ color: 'var(--st-warning-ink)' }}>
