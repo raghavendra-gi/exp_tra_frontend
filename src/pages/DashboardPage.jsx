@@ -29,6 +29,12 @@ const STATUS_OPTIONS = ['Pending', 'Query Raised', 'Approved', 'Rejected', 'In P
 const STATUS_TAB = { 'Pending': 'pending', 'Query Raised': 'query', 'Approved': 'approved', 'Rejected': 'rejected', 'In Progress': 'inprogress' };
 const TYPE_OPTIONS = Object.keys(EXPENSE_TYPES);
 
+// Backend address. On Vercel set VITE_API_URL (e.g. https://your-backend.onrender.com);
+// locally it falls back to the dev server. Trailing slash and a trailing /api are removed.
+const API_ROOT = String(
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+).replace(/\/+$/, '').replace(/\/api$/, '');
+
 // The login token is not necessarily stored under the key "token".
 // Check the common names in both storages (and unwrap JSON if needed).
 // If yours is different, add its name to this list.
@@ -69,7 +75,7 @@ export default function DashboardPage() {
   const [allCats, setAllCats] = useState(false);
 
   // ── Monthly fund (per employee) ──
-  const API = 'http://127.0.0.1:8000/api/expenses';
+  const API = `${API_ROOT}/api/expenses`;
   const [fundData, setFundData] = useState({ total_fund: 0, spent_amount: 0, remaining_amount: 0 });
   const [isFundModalOpen, setIsFundModalOpen] = useState(false);
   const [fundInput, setFundInput] = useState('');
@@ -106,8 +112,10 @@ export default function DashboardPage() {
     try {
       const res = await fetch(`${API}/fund/employees`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
       if (res.ok) setFundEmployees(await res.json());
+      else alert(`Could not load employees (${res.status}).`);
     } catch (err) {
       console.error('Failed to load employees', err);
+      alert(`Could not load employees: ${err.message}. Check VITE_API_URL points to your deployed backend.`);
     }
   };
 
