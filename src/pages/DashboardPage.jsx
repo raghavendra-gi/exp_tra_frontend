@@ -9,7 +9,10 @@ import ExpenseTable, { EmptyState } from '../components/ExpenseTable';
 import { useExpenses } from '../hooks/useExpenses';
 import { useExpenseActions } from '../hooks/useExpenseActions';
 import { EXPENSE_TYPES } from '../constants/expenseTypes';
-import { formatMoney, isApproverRole } from '../utils/format';
+import { formatMoney, formatDate, isApproverRole } from '../utils/format';
+import { approvedBillsFor } from '../utils/approvedBills';
+import Modal from '../components/Modal';
+import '../components/billsTable.css';
 import { expenseDateKey, monthKey, monthLabel, monthShort, parseKey, todayKey } from '../utils/dates';
 import TypeIcon from '../components/TypeIcon';
 
@@ -81,6 +84,8 @@ export default function DashboardPage() {
   const [fundInput, setFundInput] = useState('');
   const [fundEmployee, setFundEmployee] = useState('');   // username picked in the modal
   const [fundEmployees, setFundEmployees] = useState([]); // [{ username, display_name }]
+  const [billsOpen, setBillsOpen] = useState(false);       // approved bills behind the budget card
+  const [billsEmployee, setBillsEmployee] = useState('');   // employee picked inside the bills modal only (does not touch the dashboard filter)
 
   // The dashboard's employee filter holds a display name; the fund API wants the username.
   const filterUsername = useMemo(() => {
@@ -88,6 +93,12 @@ export default function DashboardPage() {
     const hit = (expenses || []).find((x) => x.employee_name === employee);
     return hit ? hit.employee_id : '';
   }, [expenses, employee]);
+
+  const approved = useMemo(() => approvedBillsFor(expenses, monthKey(year, month), employee), [expenses, year, month, employee]);
+  // The modal has its own employee selection: everyone for the summary chips, one person for the table.
+  const approvedEveryone = useMemo(() => approvedBillsFor(expenses, monthKey(year, month), ''), [expenses, year, month]);
+  const approvedModal = useMemo(() => approvedBillsFor(expenses, monthKey(year, month), billsEmployee), [expenses, year, month, billsEmployee]);
+  const openBills = () => { setBillsEmployee(employee); setBillsOpen(true); };
 
   const fetchFund = useCallback(async () => {
     try {
@@ -105,14 +116,34 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchFund(); }, [fetchFund, expenses]); // re-runs when an expense is approved
 
+  const selectedFundEmp = useMemo(
+    () => fundEmployees.find((u) => u.username === fundEmployee) || null,
+    [fundEmployees, fundEmployee],
+  );
+
+  // Picking an employee fills in the amount already set for this month, so it can be edited.
+  const pickFundEmployee = (username, list = fundEmployees) => {
+    setFundEmployee(username);
+    const hit = list.find((u) => u.username === username);
+    setFundInput(hit && hit.amount != null ? String(hit.amount) : '');
+  };
+
   const openFundModal = async () => {
     setFundInput('');
-    setFundEmployee(filterUsername || '');
+    setFundEmployee('');
+    setFundEmployees([]);
     setIsFundModalOpen(true);
     try {
-      const res = await fetch(`${API}/fund/employees`, { headers: { Authorization: `Bearer ${getAuthToken()}` } });
-      if (res.ok) setFundEmployees(await res.json());
-      else alert(`Could not load employees (${res.status}).`);
+      const res = await fetch(`${API}/fund/employees?year=${year}&month=${month + 1}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      if (res.ok) {
+        const list = await res.json();
+        setFundEmployees(list);
+        if (filterUsername) pickFundEmployee(filterUsername, list);
+      } else {
+        alert(`Could not load employees (${res.status}).`);
+      }
     } catch (err) {
       console.error('Failed to load employees', err);
       alert(`Could not load employees: ${err.message}. Check VITE_API_URL points to your deployed backend.`);
@@ -318,12 +349,21 @@ export default function DashboardPage() {
             activeStatus={status} 
           />
 
-          <div className="card mb-4" style={{ padding: '16px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #3b82f6' }}>
+          <div
+            className="card mb-4"
+            role="button"
+            tabIndex={0}
+            title="Show the approved bills for this month"
+            onClick={openBills}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBills(); } }}
+            style={{ padding: '16px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #3b82f6', cursor: 'pointer' }}
+          >
             <div>
               <h3 style={{ margin: 0, fontSize: '1rem', color: '#1e293b' }}>Monthly Budget Overview</h3>
               <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>{isApprover
                   ? (employee ? `${employee} · fund for ${monthLabel(year, month)}` : `All employees · fund for ${monthLabel(year, month)}`)
                   : `Your fund for ${monthLabel(year, month)}`}</p>
+              <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#2563eb', fontWeight: 500 }}>View approved bills ({approved.rows.length}) ›</p>
             </div>
             <div style={{ display: 'flex', gap: '32px', textAlign: 'right' }}>
               <div>
@@ -480,14 +520,24 @@ export default function DashboardPage() {
             <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Choose an employee and enter the budget allocated to them for {monthLabel(year, month)}.</p>
             <select
               value={fundEmployee}
-              onChange={(e) => setFundEmployee(e.target.value)}
+              onChange={(e) => pickFundEmployee(e.target.value)}
               style={{ width: '100%', marginBottom: '12px', padding: '8px' }}
             >
               <option value="">Select employee…</option>
               {fundEmployees.map((u) => (
-                <option key={u.username} value={u.username}>{u.display_name} ({u.username})</option>
+                <option key={u.username} value={u.username}>
+                  {u.display_name} ({u.username}){u.amount != null ? ` — ${formatMoney(u.amount)}` : ' — not set'}
+                </option>
               ))}
             </select>
+            {selectedFundEmp && (
+              <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#64748b' }}>
+                {selectedFundEmp.amount != null
+                  ? `Current fund for ${monthLabel(year, month)}: ${formatMoney(selectedFundEmp.amount)}`
+                  : `No fund set yet for ${monthLabel(year, month)}`}
+                {selectedFundEmp.prev_amount != null && ` · Previous month: ${formatMoney(selectedFundEmp.prev_amount)}`}
+              </p>
+            )}
             <input 
               type="number" 
               className="input" 
@@ -498,10 +548,81 @@ export default function DashboardPage() {
             />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setIsFundModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveFund}>Save Fund</button>
+              <button className="btn btn-primary" onClick={handleSaveFund}>{selectedFundEmp && selectedFundEmp.amount != null ? 'Update Fund' : 'Save Fund'}</button>
             </div>
           </div>
         </div>
+      )}
+
+      {billsOpen && (
+        <Modal
+          isOpen
+          onClose={() => setBillsOpen(false)}
+          size="lg"
+          title={`Approved bills · ${monthLabel(year, month)}`}
+        >
+          <div className="modal-body">
+            <p className="field-hint" style={{ margin: '0 0 12px' }}>
+              {isApprover ? (billsEmployee || 'All employees') : 'Your approved bills'} · {approvedModal.rows.length} {approvedModal.rows.length === 1 ? 'bill' : 'bills'} · <strong>{formatMoney(approvedModal.total)}</strong>
+            </p>
+
+            {isApprover && billsEmployee && (
+              <button type="button" className="btn btn-outline btn-sm" onClick={() => setBillsEmployee('')} style={{ margin: '0 0 12px' }}>
+                <svg className="icon rot-l" aria-hidden="true"><use href="#i-chevron" /></svg> Back to all employees
+              </button>
+            )}
+
+            {isApprover && !billsEmployee && approvedEveryone.byEmployee.length > 1 && (
+              <ul style={{ listStyle: 'none', margin: '0 0 12px', padding: 0, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {approvedEveryone.byEmployee.map((p) => (
+                  <li key={p.name} className="badge" style={{ cursor: 'pointer' }} onClick={() => setBillsEmployee(p.name)} title={`Show only ${p.name}`}>
+                    {p.name} · {p.n} · {formatMoney(p.amt)}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {approvedModal.rows.length === 0 ? (
+              <div className="day-empty"><span>No approved bills in {monthLabel(year, month)} yet.</span></div>
+            ) : (
+              <div className="bills-wrap">
+                <table className="bills-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      {isApprover && <th scope="col">Employee</th>}
+                      <th scope="col">Type</th>
+                      <th scope="col" className="bills-date">Date</th>
+                      <th scope="col" className="num">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {approvedModal.rows.map((e) => (
+                      <tr key={e.id} onClick={() => actions.openDetail(e)}>
+                        <td>#{e.id}</td>
+                        {isApprover && <td>{e.employee_name || 'Unknown'}</td>}
+                        <td><span className="bills-type"><TypeIcon type={e.type} size="sm" />{e.type}</span></td>
+                        <td className="bills-date">{formatDate(expenseDateKey(e))}</td>
+                        <td className="num"><span className="amount">{formatMoney(e.data?.amount)}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th scope="row" colSpan={isApprover ? 3 : 2} className="bills-total-label">Total</th>
+                      <td className="bills-date" />
+                      <td className="num"><strong className="amount">{formatMoney(approvedModal.total)}</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+
+            <div className="route-actions" style={{ padding: '12px 0 0' }}>
+              <button type="button" className="btn btn-outline" onClick={() => setBillsOpen(false)} style={{ marginLeft: 'auto' }}>Close</button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {actions.elements}

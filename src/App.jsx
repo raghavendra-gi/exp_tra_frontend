@@ -52,6 +52,7 @@ function AppRoutes() {
     user?.role === 'clerk' ? '/dashboard' :
     user?.role === 'accounts' ? '/accounts-dashboard' :
     user?.role === 'op_head' ? '/op-head-dashboard' :
+    user?.role === 'manager' ? '/dashboard' : 
     user?.role === 'employee' ? '/my' :
     user ? '/expenses' :
     '/login';

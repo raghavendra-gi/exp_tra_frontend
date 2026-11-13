@@ -46,8 +46,15 @@ export function decodePolyline(encoded) {
   return out;
 }
 
+/** A place is either text ("Vijayawada") or a captured point ({ lat, lng }). */
+const isPoint = (p) => p && typeof p === 'object' && Number.isFinite(p.lat) && Number.isFinite(p.lng);
+export const placeText = (p) => (isPoint(p) ? `${p.lat},${p.lng}` : String(p || ''));
+const restWaypoint = (p) => (isPoint(p)
+  ? { location: { latLng: { latitude: p.lat, longitude: p.lng } } }
+  : { address: String(p || '') });
+
 export function googleMapsDirectionsUrl(from, to) {
-  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(from)}&destination=${encodeURIComponent(to)}&travelmode=driving`;
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(placeText(from))}&destination=${encodeURIComponent(placeText(to))}&travelmode=driving`;
 }
 
 /** Map Google's many error shapes onto our small set of codes. */
@@ -110,8 +117,8 @@ async function viaRest(origin, destination) {
         'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline',
       },
       body: JSON.stringify({
-        origin: { address: origin },
-        destination: { address: destination },
+        origin: restWaypoint(origin),
+        destination: restWaypoint(destination),
         travelMode: 'DRIVE',
         routingPreference: 'TRAFFIC_UNAWARE',
         polylineQuality: 'OVERVIEW',

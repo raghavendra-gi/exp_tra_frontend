@@ -1,0 +1,34 @@
+/*
+ * Approved-bills list (opened from the Monthly Budget card on the dashboard).
+ * It does NOT use the shared .table class: that one is at least 720px wide, which is wider than
+ * this dialog, so it left big gaps between columns and pushed Amount off the right edge.
+ * This table is always as wide as its dialog and the columns sit close together.
+ */
+.bills-wrap { border: 1px solid var(--border); border-radius: var(--r-md); overflow-x: auto; }
+
+.bills-table { width: 100%; border-collapse: collapse; font-size: var(--t-sm); }
+.bills-table th,
+.bills-table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.bills-table thead th {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+  font-weight: 500;
+}
+.bills-table tbody tr { cursor: pointer; }
+.bills-table tbody tr:hover { background: var(--surface-2); }
+.bills-table .num { text-align: right; }
+.bills-table .bills-type { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.bills-table tfoot th,
+.bills-table tfoot td { background: var(--surface-2); border-bottom: none; font-weight: 600; }
+
+/* Very narrow phones: drop the least useful column instead of scrolling sideways. */
+@media (max-width: 420px) {
+  .bills-table .bills-date { display: none; }
+}
