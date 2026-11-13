@@ -89,7 +89,6 @@ function Sidebar({ isOpen, onClose }) {
             <li>
               <NavLink 
   to={
-    user?.role === 'clerk' ? '/dashboard' : 
     user?.role === 'accounts' ? '/accounts-dashboard' : 
     user?.role === 'op_head' ? '/op-head-dashboard' : 
     '/my'
@@ -153,7 +152,7 @@ function Sidebar({ isOpen, onClose }) {
               <div className="avatar" aria-hidden="true">{initials}</div>
               <div className="sidebar-user-text">
                 <span className="sidebar-user-name">{name}</span>
-                <span className="sidebar-user-role">{ROLE_LABEL[user?.role] || user?.role}</span>
+                <span className="sidebar-user-role">{user?.role_title || ROLE_LABEL[user?.role] || user?.role}</span>
               </div>
             </Link>
             <button type="button" className="sidebar-signout" onClick={handleLogout} title="Sign out" aria-label="Sign out">

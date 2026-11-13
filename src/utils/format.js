@@ -67,4 +67,5 @@ export function statusIcon(status) {
   return STATUS_ICONS[status] || 'i-info';
 }
 
-export const isApproverRole = (user) => user?.role === 'clerk' || user?.role === 'accounts' || user?.role === 'op_head';
+// Clerks file bills like employees; only Accounts and the Operation Head approve.
+export const isApproverRole = (user) => user?.role === 'accounts' || user?.role === 'op_head';

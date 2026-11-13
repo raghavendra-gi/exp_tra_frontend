@@ -11,18 +11,31 @@ import Layout from '../components/Layout';
 
 const ROLE_OPTIONS = [
   { value: 'employee', label: 'Employee' },
-  { value: 'clerk', label: 'Clerk' },
+  { value: 'clerk', label: 'Clerk (files bills)' },
   { value: 'accounts', label: 'Accounts' },
   { value: 'op_head', label: 'Operational Head' },
- /* { value: 'custom', label: 'Other (Type manually)' },*/
 ];
+
+// Picking this in the Role list lets Accounts type a role name that does not exist yet.
+const NEW_ROLE = '__new__';
+
+// What a typed (custom) role is allowed to do. The backend maps these to the existing
+// 'employee' and 'clerk' access, so the typed name is a label and never new permissions.
+const ACCESS_OPTIONS = [
+  { value: 'employee', label: 'Employee access', hint: 'Can file and track their own expenses.' },
+];
+
+// Same comparison the backend uses, so a typed name cannot pose as a built-in role.
+const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead'];
+const normName = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const EMPTY = {
   username: '',
   display_name: '',
   password: '',
   role: 'employee',
-  /*customRole: '',*/
+  new_role_name: '',
+  new_role_access: 'employee',
   email: '',
   branch: '',
   designation: '',
@@ -38,6 +51,8 @@ export default function CreateEmployeePage() {
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState('');
 
+  const isNewRole = form.role === NEW_ROLE;
+
   const set = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -52,14 +67,17 @@ export default function CreateEmployeePage() {
     if (!form.password) er.password = 'Enter a password.';
     else if (form.password.length < 6) er.password = 'Use at least 6 characters.';
     if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = 'Enter a valid email address.';
-    if (!form.role.trim()) {
-      er.role = 'Please select or type a role.';
+    if (isNewRole) {
+      const n = form.new_role_name.trim();
+      if (!n) er.new_role_name = 'Type the new role name.';
+      else if (n.length > 50) er.new_role_name = 'Use 50 characters or fewer.';
+      else if (BUILTIN_NAMES.includes(normName(n))) er.new_role_name = 'That role already exists. Choose it from the Role list.';
     }
     setErrors(er);
     return Object.keys(er).length === 0;
   };
 
-    const submit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setBanner('');
     if (!validate()) return;
@@ -72,7 +90,9 @@ export default function CreateEmployeePage() {
           username: form.username.trim(),
           display_name: form.display_name.trim(),
           password: form.password,
-          role: form.role.trim().toLowerCase(), // 👈 Directly sends what was selected/typed
+          // A typed role keeps the name as a label and gets Employee access.
+          role: isNewRole ? 'employee' : form.role,
+          role_title: isNewRole ? form.new_role_name.trim().replace(/\s+/g, ' ') : null,
           email: form.email.trim() || null,
           branch: form.branch.trim() || null,
           designation: form.designation.trim() || null,
@@ -82,6 +102,7 @@ export default function CreateEmployeePage() {
       setForm(EMPTY);
       setErrors({});
     } catch (err) {
+      // e.g. "Username already registered", "Only Accounts team can create new users"
       setBanner(err.message || 'Could not create the user.');
     } finally {
       setBusy(false);
@@ -153,30 +174,37 @@ export default function CreateEmployeePage() {
             {errors.password && <p className="field-error">{errors.password}</p>}
           </div>
 
-                    {/* Replace the old Role select and custom role input with this */}
           <div className="form-group">
-            <label htmlFor="ce-role">Role *</label>
-            <input
-              id="ce-role"
-              name="role"
-              type="text"
-              list="role-options"
-              value={form.role}
-              onChange={set}
-              placeholder="Select or type a role"
-              autoComplete="off"
-              aria-invalid={errors.role ? 'true' : undefined}
-            />
-            {/* Datalist provides the dropdown suggestions but allows typing */}
-            <datalist id="role-options">
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
-              ))}
-            </datalist>
-            {errors.role && <p className="field-error">{errors.role}</p>}
+            <label htmlFor="ce-role">Role</label>
+            <select id="ce-role" name="role" value={form.role} onChange={set}>
+              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              <option value={NEW_ROLE}>+ Add a new role…</option>
+            </select>
           </div>
+
+          {isNewRole && (
+            <>
+              <div className="form-group">
+                <label htmlFor="ce-newrole">New role name *</label>
+                <input
+                  id="ce-newrole" name="new_role_name" type="text" autoComplete="off" maxLength={50}
+                  value={form.new_role_name} onChange={set} placeholder="e.g. Area Manager"
+                  aria-invalid={errors.new_role_name ? 'true' : undefined}
+                />
+                {errors.new_role_name && <p className="field-error">{errors.new_role_name}</p>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="ce-access">What can this role do? *</label>
+                <select id="ce-access" name="new_role_access" value={form.new_role_access} onChange={set}>
+                  {ACCESS_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+                </select>
+                <p className="form-card-sub" style={{ margin: '4px 0 0' }}>
+                  {ACCESS_OPTIONS.find((a) => a.value === form.new_role_access)?.hint}
+                </p>
+              </div>
+            </>
+          )}
 
           <div className="form-group">
             <label htmlFor="ce-email">Email</label>
