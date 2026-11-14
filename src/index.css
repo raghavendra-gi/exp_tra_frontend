@@ -1481,7 +1481,7 @@ body.modal-open { overflow:hidden; }
 /* ── "View bill" button inside the expense detail modal ── */
 .view-bill-btn {
   width: 100%;
-  height: 48px;
+  height: 33px;
   margin: var(--sp-1) 0 var(--sp-3);
   font-size: 1rem;
   font-weight: 600;
@@ -1802,4 +1802,43 @@ body.modal-open { overflow:hidden; }
 .sidebar-signout {
   margin-left: 0; /* Ensure no extra left margin */
   flex-shrink: 0;
+}
+
+/* ── Monthly budget card (dashboard) ───────────────────────────── */
+.fund-card {
+  padding:var(--sp-4); background:var(--surface-2); border-left:4px solid var(--accent); cursor:pointer;
+  display:flex; justify-content:space-between; align-items:center; gap:var(--sp-4);
+}
+.fund-card-info { min-width:0; }
+.fund-card-title { margin:0; font-size:1rem; color:var(--ink); }
+.fund-card-sub { margin:4px 0 0; font-size:.85rem; color:var(--ink-3); }
+.fund-card-link { margin:6px 0 0; font-size:.8rem; color:var(--accent-ink); font-weight:500; }
+.fund-stats { display:flex; gap:32px; text-align:right; flex-shrink:0; }
+.fund-stat { min-width:0; }
+.fund-stat-label { font-size:.75rem; color:var(--ink-3); }
+.fund-stat-value { font-weight:700; font-size:1.1rem; color:var(--ink); font-variant-numeric:tabular-nums; }
+.fund-stat-value.is-spent { color:var(--st-critical); }
+.fund-stat-value.is-left  { color:var(--st-good); }
+
+@media (max-width:640px) {
+  .fund-card { flex-direction:column; align-items:stretch; gap:var(--sp-3); }
+  .fund-stats { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--sp-2); text-align:left; flex-shrink:1; }
+  .fund-stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:var(--sp-2); }
+  .fund-stat-label { display:block; font-size:10px; line-height:1.2; }
+  .fund-stat-value { font-size:12px; overflow-wrap:anywhere; }
+}
+
+/* ── Location log: row -> card on phones ───────────────────────── */
+@media (max-width:640px) {
+  .loc-table tbody tr {
+    grid-template-columns:minmax(0, 1fr) auto;
+    grid-template-areas: "emp req" "place place" "captured acc" "actions actions";
+  }
+  .loc-table .c-emp { font-weight:600; }
+  .loc-table .c-req { grid-area:req; justify-content:flex-end; }
+  .loc-table .c-place { grid-area:place; display:block; overflow-wrap:anywhere; }
+  .loc-table .c-captured { grid-area:captured; font-size:var(--t-xs); color:var(--ink-3); }
+  .loc-table .c-acc { grid-area:acc; justify-content:flex-end; font-size:var(--t-xs); color:var(--ink-3); }
+  .loc-table .c-actions { grid-area:actions; width:100%; }
+  .loc-table .c-actions .btn-row { width:100%; justify-content:flex-end; }
 }

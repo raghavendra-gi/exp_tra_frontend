@@ -91,6 +91,7 @@ function Sidebar({ isOpen, onClose }) {
   to={
     user?.role === 'accounts' ? '/accounts-dashboard' : 
     user?.role === 'op_head' ? '/op-head-dashboard' : 
+    user?.role === 'clerk' ? '/dashboard' : 
     '/my'
   } 
   onClick={onClose} 

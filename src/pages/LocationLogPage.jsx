@@ -95,7 +95,7 @@ export default function LocationLogPage() {
         </div>
 
         <div className="table-wrap" aria-busy={loading || undefined}>
-          <table className="table" id="locationTable">
+          <table className="table loc-table" id="locationTable">
             <thead>
               <tr>
                 <th scope="col">Employee</th>
@@ -124,13 +124,13 @@ export default function LocationLogPage() {
                 </tr>
               ) : rows.map(({ e, p, isTripStart, destination }) => (
                 <tr key={`${e.id}-${p.key}`}>
-                  <td>{e.employee_name}</td>
-                  <td>
+                  <td className="c-emp">{e.employee_name}</td>
+                  <td className="c-req">
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => actions.openDetail(e)} aria-label={`Open request ${e.id}`}>
                       <TypeIcon type={e.type} size="sm" /> #{e.id} · {e.type}
                     </button>
                   </td>
-                  <td>
+                  <td className="c-place">
                     <div>{p.address || `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`}</div>
                     <div className="field-hint" style={{ marginTop: 2 }}>{p.label}</div>
                     {isTripStart && (
@@ -139,9 +139,9 @@ export default function LocationLogPage() {
                       </div>
                     )}
                   </td>
-                  <td>{p.at ? formatDateTime(p.at) : '—'}</td>
-                  <td>{p.accuracy != null ? formatAccuracy(p.accuracy) : '—'}</td>
-                  <td>
+                  <td className="c-captured">{p.at ? formatDateTime(p.at) : '—'}</td>
+                  <td className="c-acc">{p.accuracy != null ? formatAccuracy(p.accuracy) : '—'}</td>
+                  <td className="c-actions">
                     <div className="btn-row" style={{ gap: 8, justifyContent: 'flex-end' }}>
                       {isTripStart && (
                         <button

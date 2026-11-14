@@ -5,6 +5,7 @@ import CameraModal from './CameraModal';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format } from 'date-fns';
+import { canHash, hashOf, hashPicked } from '../utils/billHash';
 
 function FieldWrapper({ field, children }) {
   const id = `f_${field.key}`;
@@ -27,15 +28,52 @@ function fmtSize(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function FileField({ field, value, onChange }) {
+function FileField({ field, value, onChange, checkBill }) {
   const fileList = Array.isArray(value) ? value : [];
   const inputRef = useRef(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [dupMsg, setDupMsg] = useState('');
 
-  const add = (picked) => {
+  // Bill fields: every picked file is fingerprinted and checked before it is added, so a
+  // duplicate bill is turned away on the spot. (The server checks again when the expense is saved.)
+  const add = async (picked) => {
     const ok = picked.filter((f) => !f.type || ACCEPT_SET.has(f.type));
-    if (ok.length) onChange(field.key, [...fileList, ...ok]); // always append
+    if (!ok.length) return;
+    setDupMsg('');
+    if (!checkBill || !canHash()) {
+      onChange(field.key, [...fileList, ...ok]); // always append
+      return;
+    }
+
+    setChecking(true);
+    try {
+      const seen = new Set(await Promise.all(fileList.map(hashOf)));
+      const msgs = [];
+      const fresh = [];
+      for (const f of ok) {                       // the same file picked twice in this form
+        const hash = await hashPicked(f);
+        if (seen.has(hash)) { msgs.push(`Duplicate bill: "${f.name}" is already added. Keep only one copy.`); continue; }
+        seen.add(hash);
+        fresh.push({ f, hash });
+      }
+
+      let good = fresh;
+      if (fresh.length) {                         // the same bill already sent in another request
+        const dupes = await checkBill(fresh.map(({ f, hash }) => ({ hash, name: f.name })));
+        const bad = new Map(dupes.map((d) => [d.hash, d.message]));
+        good = fresh.filter(({ hash }) => !bad.has(hash));
+        msgs.push(...new Set(bad.values()));
+      }
+
+      if (good.length) onChange(field.key, [...fileList, ...good.map(({ f }) => f)]);
+      setDupMsg(msgs.join(' '));
+    } catch {
+      onChange(field.key, [...fileList, ...ok]);  // could not check: the server still catches it on save
+    } finally {
+      setChecking(false);
+    }
   };
 
   const handleFilePick = (e) => {
@@ -43,7 +81,7 @@ function FileField({ field, value, onChange }) {
     e.target.value = '';
   };
 
-  const removeFile = (index) => onChange(field.key, fileList.filter((_, i) => i !== index));
+  const removeFile = (index) => { setDupMsg(''); onChange(field.key, fileList.filter((_, i) => i !== index)); };
   const openPicker = () => inputRef.current?.click();
 
   const dnd = {
@@ -103,12 +141,19 @@ function FileField({ field, value, onChange }) {
 
       <input ref={inputRef} type="file" id={`file_${field.key}`} hidden accept={ACCEPT} multiple onChange={handleFilePick} />
 
+      {checking && <p className="field-hint" role="status" style={{ margin: '6px 0 0' }}>Checking the bill for duplicates…</p>}
+      {dupMsg && (
+        <div className="field-error" role="alert">
+          <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg> {dupMsg}
+        </div>
+      )}
+
       {isCameraOpen && (
         <CameraModal
           isOpen
           onClose={() => setIsCameraOpen(false)}
           onCapture={(file) => {
-            onChange(field.key, [...fileList, file]); // always append new photo
+            add([file]);                              // always append new photo (after the duplicate check)
             setIsCameraOpen(false);
           }}
         />
@@ -180,7 +225,7 @@ function CheckboxesField({ field, value, onChange }) {
  * keystroke anywhere re-rendered every field on the form (including the date
  * picker and the place inputs). `allValues` is only passed to route fields.
  */
-function FieldRenderer({ field, value, onChange, allValues = {}, invalid = false }) {
+function FieldRenderer({ field, value, onChange, allValues = {}, invalid = false, checkBill }) {
   const id = `f_${field.key}`;
   const aria = invalid ? { 'aria-invalid': true, 'aria-describedby': `err_${field.key}` } : {};
 
@@ -310,7 +355,7 @@ function FieldRenderer({ field, value, onChange, allValues = {}, invalid = false
       return <CheckboxesField field={field} value={value} onChange={onChange} />;
 
     case 'file':
-      return <FileField field={field} value={value} onChange={onChange} />;
+      return <FileField field={field} value={value} onChange={onChange} checkBill={field.checkDuplicate ? checkBill : undefined} />;
 
     default:
       return (

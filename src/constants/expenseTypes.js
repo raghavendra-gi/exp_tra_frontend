@@ -8,7 +8,7 @@ export const EXPENSE_TYPES = {
         options: ['Flowers','Agarabathi','Camphor','Haldi','Kunkuma','Cotton Wicks','Sesame oil','Cow Ghee','Chandan Powder'] },*/
       { key: 'date',    type: 'date',   label: 'Date', required: true, default: 'today' },
       { key: 'amount',  type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
-      { key: 'receipt', type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
+      { key: 'receipt', type: 'file', required: true, checkDuplicate: true,   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
       { key: 'remarks', type: 'textarea', label: 'Comments', placeholder: 'Write comments here' },
     ]
   },
@@ -19,7 +19,7 @@ export const EXPENSE_TYPES = {
         options: ['Tiffin','Lunch','Dinner'] },
       { key: 'date',    type: 'date',   label: 'Date', required: true, default: 'today' },
       { key: 'amount',  type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
-      { key: 'receipt', type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
+      { key: 'receipt', type: 'file', required: true, checkDuplicate: true,   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
       { key: 'remarks', type: 'textarea', label: 'Comments', placeholder: 'Write comments here' },
     ]
   },
@@ -33,11 +33,11 @@ export const EXPENSE_TYPES = {
       { key: 'kilometers', type: 'number', label: 'Kilometers', placeholder: 'Filled automatically from the route', required: true, min: 0, autoKm: true },
       { key: 'transport',  type: 'chips',  label: 'Type of transport', required: true,
         options: [...TRANSPORT_BY_TICKET, ...TRANSPORT_BY_VEHICLE] },
-      { key: 'ticketBill', type: 'file', label: 'Ticket bill', title: 'Upload ticket bill', hint: 'PNG, JPG or PDF up to 5 MB',
+      { key: 'ticketBill', type: 'file', required: true, checkDuplicate: true, label: 'Ticket bill', title: 'Upload ticket bill', hint: 'PNG, JPG or PDF up to 5 MB',
         showIf: v => TRANSPORT_BY_TICKET.includes(v.transport) },
-      { key: 'startMeter', type: 'file', label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
+      { key: 'startMeter', type: 'file', required: true, label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
-      { key: 'endMeter',   type: 'file', label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
+      { key: 'endMeter',   type: 'file', required: true, label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
       { key: 'amount',     type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
       { key: 'remarks',    type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here' },
@@ -67,7 +67,7 @@ export const EXPENSE_TYPES = {
       { key: 'fromDate', type: 'date', label: 'From date', required: true, default: 'today' },
       { key: 'toDate',   type: 'date', label: 'To date', required: true, minFrom: 'fromDate' },
       { key: 'amount',   type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
-      { key: 'receipt',  type: 'file', label: 'Bills / Receipts', title: 'Upload bills or receipts', hint: 'You can add several files', multiple: true },
+      { key: 'receipt',  type: 'file', required: true, checkDuplicate: true, label: 'Bills / Receipts', title: 'Upload bills or receipts', hint: 'You can add several files', multiple: true },
       { key: 'remarks',  type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks' },
     ]
   },
@@ -79,7 +79,7 @@ export const EXPENSE_TYPES = {
       { key: 'location',      type: 'text',   label: 'Location', placeholder: 'Enter location', required: true },
       { key: 'estimatedCost', type: 'number', label: 'Estimated cost', money: true, placeholder: 'Estimated cost', min: 0 },
       { key: 'amount',        type: 'number', label: 'Actual cost', money: true, placeholder: 'Actual cost', required: true, min: 0.01 },
-      { key: 'receipt',       type: 'file',   label: 'Bills / Receipts', title: 'Upload bills or receipts', hint: 'You can add several files', multiple: true },
+      { key: 'receipt',       type: 'file', required: true, checkDuplicate: true,   label: 'Bills / Receipts', title: 'Upload bills or receipts', hint: 'You can add several files', multiple: true },
       { key: 'remarks',       type: 'textarea', label: 'Additional remarks', placeholder: 'Enter additional remarks' },
     ]
   },
@@ -92,7 +92,7 @@ export const EXPENSE_TYPES = {
       { key: 'trackingNumber', type: 'text',   label: 'Tracking number', placeholder: 'Tracking number' },
       { key: 'amount',         type: 'number', label: 'Cost', money: true, required: true, min: 0.01 },
       { key: 'date',           type: 'date',   label: 'Date', required: true, default: 'today' },
-      { key: 'receipt',        type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
+      { key: 'receipt',        type: 'file', required: true, checkDuplicate: true,   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
     ]
   },
   'Gifts': {
@@ -104,7 +104,7 @@ export const EXPENSE_TYPES = {
       { key: 'giftDescription', type: 'text',   label: 'Gift item description', placeholder: 'Describe the gift', required: true },
       { key: 'amount',          type: 'number', label: 'Cost', money: true, required: true, min: 0.01 },
       { key: 'date',            type: 'date',   label: 'Date', required: true, default: 'today' },
-      { key: 'receipt',         type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
+      { key: 'receipt',         type: 'file', required: true, checkDuplicate: true,   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
       { key: 'remarks',         type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here' },
     ]
   },
@@ -114,7 +114,7 @@ export const EXPENSE_TYPES = {
       { key: 'description', type: 'text',   label: 'Description', placeholder: 'Enter expense description', required: true },
       { key: 'amount',      type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
       { key: 'date',        type: 'date',   label: 'Date', required: true, default: 'today' },
-      { key: 'receipt',     type: 'file',   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
+      { key: 'receipt',     type: 'file', required: true, checkDuplicate: true,   label: 'Bill / Receipt', title: 'Upload bill or receipt', hint: 'PNG, JPG or PDF up to 5 MB' },
       { key: 'remarks',     type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here' },
     ]
   },

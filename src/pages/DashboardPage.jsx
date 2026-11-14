@@ -350,33 +350,32 @@ export default function DashboardPage() {
           />
 
           <div
-            className="card mb-4"
+            className="card mb-4 fund-card"
             role="button"
             tabIndex={0}
             title="Show the approved bills for this month"
             onClick={openBills}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBills(); } }}
-            style={{ padding: '16px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '4px solid #3b82f6', cursor: 'pointer' }}
           >
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1rem', color: '#1e293b' }}>Monthly Budget Overview</h3>
-              <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>{isApprover
+            <div className="fund-card-info">
+              <h3 className="fund-card-title">Monthly Budget Overview</h3>
+              <p className="fund-card-sub">{isApprover
                   ? (employee ? `${employee} · fund for ${monthLabel(year, month)}` : `All employees · fund for ${monthLabel(year, month)}`)
                   : `Your fund for ${monthLabel(year, month)}`}</p>
-              <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: '#2563eb', fontWeight: 500 }}>View approved bills ({approved.rows.length}) ›</p>
+              <p className="fund-card-link">View approved bills ({approved.rows.length}) ›</p>
             </div>
-            <div style={{ display: 'flex', gap: '32px', textAlign: 'right' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Total Fund</span>
-                <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{formatMoney(fundData.total_fund)}</div>
+            <div className="fund-stats">
+              <div className="fund-stat">
+                <span className="fund-stat-label">Total Fund</span>
+                <div className="fund-stat-value">{formatMoney(fundData.total_fund)}</div>
               </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Approved Spent</span>
-                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#ef4444' }}>{formatMoney(fundData.spent_amount)}</div>
+              <div className="fund-stat">
+                <span className="fund-stat-label">Approved Spent</span>
+                <div className="fund-stat-value is-spent">{formatMoney(fundData.spent_amount)}</div>
               </div>
-              <div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Remaining Fund</span>
-                <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: fundData.remaining_amount < 0 ? '#ef4444' : '#10b981' }}>
+              <div className="fund-stat">
+                <span className="fund-stat-label">Remaining Fund</span>
+                <div className={`fund-stat-value ${fundData.remaining_amount < 0 ? 'is-spent' : 'is-left'}`}>
                   {formatMoney(fundData.remaining_amount)}
                 </div>
               </div>

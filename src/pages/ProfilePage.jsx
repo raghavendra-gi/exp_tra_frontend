@@ -157,6 +157,15 @@ export default function ProfilePage() {
               </div>
 
               <div className="pi-field">
+                <label>Branch</label>
+                {isEditing ? (
+                  <input type="text" name="branch" value={formData.branch} onChange={handleChange} className="input" placeholder="Enter branch" maxLength={100} />
+                ) : (
+                  <div className="pi-value-box">{formData.branch || '—'}</div>
+                )}
+              </div>
+
+              <div className="pi-field">
                 <label>Email Address</label>
                 {isEditing ? (
                   <input type="email" name="email" value={formData.email} onChange={handleChange} className="input" placeholder="Enter email" />

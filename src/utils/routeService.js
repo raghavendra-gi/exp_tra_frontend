@@ -218,6 +218,6 @@ export async function computeDrivingRoute(origin, destination) {
   }
   if (loadErr) errors.push(classify(loadErr));     // least specific — report it last
 
-  /* Report the most useful error, not simply the first one. */
+  /* Reaport the most useful error, not simply the first one. */
   throw errors.find((e) => normalizeMapsCode(e.code) !== 'GENERIC') || errors[0];
 }

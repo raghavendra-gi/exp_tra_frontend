@@ -19,11 +19,7 @@ const ROLE_OPTIONS = [
 // Picking this in the Role list lets Accounts type a role name that does not exist yet.
 const NEW_ROLE = '__new__';
 
-// What a typed (custom) role is allowed to do. The backend maps these to the existing
-// 'employee' and 'clerk' access, so the typed name is a label and never new permissions.
-const ACCESS_OPTIONS = [
-  { value: 'employee', label: 'Employee access', hint: 'Can file and track their own expenses.' },
-];
+// A typed (custom) role is only a label: the user gets plain Employee access (role: 'employee').
 
 // Same comparison the backend uses, so a typed name cannot pose as a built-in role.
 const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead'];
@@ -35,7 +31,6 @@ const EMPTY = {
   password: '',
   role: 'employee',
   new_role_name: '',
-  new_role_access: 'employee',
   email: '',
   branch: '',
   designation: '',
@@ -175,36 +170,31 @@ export default function CreateEmployeePage() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="ce-role">Role</label>
-            <select id="ce-role" name="role" value={form.role} onChange={set}>
-              {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-              <option value={NEW_ROLE}>+ Add a new role…</option>
-            </select>
-          </div>
-
-          {isNewRole && (
-            <>
-              <div className="form-group">
-                <label htmlFor="ce-newrole">New role name *</label>
+            <label htmlFor={isNewRole ? 'ce-newrole' : 'ce-role'}>{isNewRole ? 'New role name *' : 'Role'}</label>
+            {isNewRole ? (
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
-                  id="ce-newrole" name="new_role_name" type="text" autoComplete="off" maxLength={50}
-                  value={form.new_role_name} onChange={set} placeholder="e.g. Area Manager"
+                  id="ce-newrole" name="new_role_name" type="text" autoComplete="off" maxLength={50} autoFocus
+                  value={form.new_role_name} onChange={set} placeholder="Type the new role, e.g. Area Manager"
+                  style={{ flex: 1 }}
                   aria-invalid={errors.new_role_name ? 'true' : undefined}
                 />
-                {errors.new_role_name && <p className="field-error">{errors.new_role_name}</p>}
+                <button
+                  type="button" className="btn btn-outline btn-icon"
+                  onClick={() => { setForm((f) => ({ ...f, role: 'employee', new_role_name: '' })); setErrors((er) => ({ ...er, new_role_name: '' })); }}
+                  aria-label="Back to the role list" title="Back to the role list"
+                >
+                  <svg className="icon" aria-hidden="true"><use href="#i-close" /></svg>
+                </button>
               </div>
-
-              <div className="form-group">
-                <label htmlFor="ce-access">What can this role do? *</label>
-                <select id="ce-access" name="new_role_access" value={form.new_role_access} onChange={set}>
-                  {ACCESS_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
-                </select>
-                <p className="form-card-sub" style={{ margin: '4px 0 0' }}>
-                  {ACCESS_OPTIONS.find((a) => a.value === form.new_role_access)?.hint}
-                </p>
-              </div>
-            </>
-          )}
+            ) : (
+              <select id="ce-role" name="role" value={form.role} onChange={set}>
+                {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                <option value={NEW_ROLE}>+ Add a new role…</option>
+              </select>
+            )}
+            {errors.new_role_name && <p className="field-error">{errors.new_role_name}</p>}
+          </div>
 
           <div className="form-group">
             <label htmlFor="ce-email">Email</label>
