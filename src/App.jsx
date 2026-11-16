@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import { isApproverRole } from './utils/format';
 import ProfilePage from './pages/ProfilePage';
 import CreateEmployeePage from './pages/CreateEmployeePage';
+import UsersPage from './pages/UsersPage';
 
 import OpHeadDashboardPage from './pages/OpHeadDashboardPage';
 import AccountsDashboardPage from './pages/AccountsDashboardPage';
@@ -72,6 +73,9 @@ function AppRoutes() {
           path="/employees/new"
           element={user?.role === 'accounts' ? <CreateEmployeePage /> : <Navigate to={home} replace />}
         />
+
+        {/* Accounts only: see every user and edit their details (the backend enforces this too). */}
+        <Route path="/users" element={user?.role === 'accounts' ? <UsersPage /> : <Navigate to={home} replace />} />
 
         {/* Approvers only: where employees captured their location with an expense. */}
         <Route path="/locations" element={isApproverRole(user) ? <LocationLogPage /> : <Navigate to={home} replace />} />

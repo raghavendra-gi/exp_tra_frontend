@@ -102,20 +102,6 @@ function ExpenseForm() {
     setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
   }, []);
 
-  // ── Duplicate bills: ask the server which of these bill fingerprints it already has ──
-  const editingId = editingExpense?.id ?? null;
-  const checkBill = useCallback(async (items) => {
-    try {
-      const res = await expenseAPI('/expenses/check-bills', {
-        method: 'POST',
-        body: JSON.stringify({ items, expense_id: editingId }),
-      });
-      return res?.duplicates || [];
-    } catch {
-      return [];   // the check is only an early warning - saving still verifies the bill
-    }
-  }, [editingId]);
-
   // ── Validation (only for visible fields) ──
   const validate = () => {
     const newErrors = {};
@@ -214,13 +200,13 @@ function ExpenseForm() {
       navigate('/my');
     } catch (err) {
       console.error(err);
-      // The server turned a duplicate bill away: show the message on the bill field itself.
+      // The server found the same bill attached twice: show the message on the bill field itself.
       const billField = String(err.message || '').startsWith('Duplicate bill')
         ? visibleFields.find((f) => f.checkDuplicate && (!f.showIf || f.showIf(values)))
         : null;
       if (billField) {
         setErrors((prev) => ({ ...prev, [billField.key]: err.message }));
-        setFormError('This bill was already submitted. Remove it and attach a different bill.');
+        setFormError('The same bill is attached more than once. Keep only one copy.');
         document.getElementById(`wrap_${billField.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         setFormError(err.message || 'Failed to save expense.');
@@ -274,7 +260,6 @@ function ExpenseForm() {
         onChange={handleChange}
         allValues={field.type === 'route' ? values : undefined}
         invalid={!!errors[field.key]}
-        checkBill={checkBill}
       />
       {errors[field.key] && (
         <div className="field-error" role="alert" id={`err_${field.key}`}>

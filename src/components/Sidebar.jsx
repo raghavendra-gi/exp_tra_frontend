@@ -120,6 +120,14 @@ function Sidebar({ isOpen, onClose }) {
     </NavLink>
   </li>
 )}
+            {user?.role === 'accounts' && (
+              <li>
+                <NavLink to="/users" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+                  <svg className="icon" aria-hidden="true"><use href="#i-list" /></svg>
+                  <span className="sidebar-label">Manage users</span>
+                </NavLink>
+              </li>
+            )}
             {isApprover && (
               <li>
                 <NavLink to="/locations" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>

@@ -92,43 +92,37 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="ph-main-row">
-              <div className="ph-avatar-wrap">
-                {/* Show image if exists, otherwise initials */}
-                {formData.avatar ? (
-                  <img src={formData.avatar} alt="Profile" className="ph-avatar" style={{ objectFit: 'cover' }} />
-                ) : (
-                  <div className="avatar ph-avatar">{initials}</div>
-                )}
+                      <div className="ph-main-row">
+  
+  {/* Left Side: Avatar and Name */}
+  <div className="ph-text-group">
+    <div className="ph-avatar-wrap">
+      {formData.avatar ? (
+        <img src={formData.avatar} alt="Profile" className="ph-avatar" style={{ objectFit: 'cover' }} />
+      ) : (
+        <div className="avatar ph-avatar">{initials}</div>
+      )}
+      <label className="ph-avatar-camera" title="Upload Profile Picture">
+        <svg className="icon" aria-hidden="true"><use href="#i-camera" /></svg>
+        <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+      </label>
+    </div>
 
-                <label className="ph-avatar-camera" title="Upload Profile Picture">
-                  <svg className="icon" aria-hidden="true"><use href="#i-camera" /></svg>
-                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                </label>
-              </div>
+    <div className="ph-text">
+      <h2 className="ph-name">
+        {name}
+        <span className="ph-role-badge">{roleLabel}</span>
+      </h2>
+    </div>
+  </div>
 
-              <div className="ph-text">
-                <h2 className="ph-name">
-                  {name}
-                  <span className="ph-role-badge">{roleLabel}</span>
-                </h2>
-              </div>
-            </div>
-          </div>
+  {/* Right Side: Branch Info */}
+  <div className="ph-branch-info">
+    <span className="branch-label">Branch</span>
+    <span className="branch-value">{formData.branch || '—'}</span>
+  </div>
 
-          <div className="profile-quick-stats">
-            <div className="pqs-item">
-              <div className="pqs-label">
-                <svg className="icon text-blue"><use href="#i-mail" /></svg> Mail ID
-              </div>
-              <div className="pqs-value">{formData.email || '—'}</div>
-            </div>
-            <div className="pqs-item">
-              <div className="pqs-label">
-                <svg className="icon text-purple"><use href="#i-pin" /></svg> Branch
-              </div>
-              <div className="pqs-value">{formData.branch || '—'}</div>
-            </div>
+</div>  
           </div>
 
           <div className="profile-info-section">
