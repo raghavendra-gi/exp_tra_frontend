@@ -61,7 +61,7 @@ export default function LocationLogPage() {
   return (
     <Layout title="Location log" subtitle="Where employees captured their location while filing expenses">
       <div className="card card-flush">
-        <div className="dash-toolbar" style={{ padding: 'var(--sp-4)' }}>
+        <div className="dash-toolbar loc-toolbar">
           <div className="dash-filters" role="group" aria-label="Filters">
             <label className="filter">
               <span className="sr-only">Employee</span>

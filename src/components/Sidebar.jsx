@@ -113,16 +113,8 @@ function Sidebar({ isOpen, onClose }) {
           <p className="sidebar-section">{isApprover ? 'Review' : 'Status'}</p>
           <ul className="sidebar-menu">
             {user?.role === 'accounts' && (
-  <li>
-    <NavLink to="/employees/new" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
-      <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
-      <span className="sidebar-label">Create Employee</span>
-    </NavLink>
-  </li>
-)}
-            {user?.role === 'accounts' && (
               <li>
-                <NavLink to="/users" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+                <NavLink to="/users" onClick={onClose} className={({ isActive }) => (isActive || location.pathname === '/employees/new' ? 'active' : undefined)}>
                   <svg className="icon" aria-hidden="true"><use href="#i-list" /></svg>
                   <span className="sidebar-label">Manage users</span>
                 </NavLink>

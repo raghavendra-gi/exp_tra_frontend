@@ -262,10 +262,6 @@ export default function DashboardPage() {
             <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
             <span className="btn-text">Set Monthly Fund</span>
           </button>
-          <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees/new')}>
-            <svg className="icon" aria-hidden="true"><use href="#i-user" /></svg>
-            <span className="btn-text">Create Employee</span>
-          </button>
         </>
       )}
       <button className="btn btn-primary btn-sm" onClick={() => navigate('/expenses', { state: { tab: 'pending' } })}>

@@ -109,8 +109,8 @@ export default function CreateEmployeePage() {
       title="Create Employee"
       subtitle="Add a new person who can sign in to the expense tracker"
       headerRight={
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => navigate('/accounts-dashboard')}>
-          <span className="btn-text">Back to dashboard</span>
+        <button type="button" className="btn btn-outline btn-sm" onClick={() => navigate('/users')}>
+          <span className="btn-text">Back to users</span>
         </button>
       }
     >

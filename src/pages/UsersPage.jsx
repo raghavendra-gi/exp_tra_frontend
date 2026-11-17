@@ -287,7 +287,7 @@ export default function UsersPage() {
           ))}
         </div>
 
-        <div className="dash-toolbar" style={{ padding: 'var(--sp-4)' }}>
+        <div className="dash-toolbar users-toolbar">
           <div className="dash-filters" role="group" aria-label="Filters">
             <label className="filter users-search">
               <span className="sr-only">Search users</span>
