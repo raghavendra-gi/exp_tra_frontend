@@ -68,4 +68,9 @@ export function statusIcon(status) {
 }
 
 // Clerks file bills like employees; only Accounts and the Operation Head approve.
-export const isApproverRole = (user) => user?.role === 'accounts' || user?.role === 'op_head';
+/*export const isApproverRole = (user) => user?.role === 'accounts' || user?.role === 'op_head';*/
+// Accounts, the Operational Head and the Chairman approve. Clerks file bills like employees.
+export const isApproverRole = (user) => ['accounts', 'op_head', 'chairman'].includes(user?.role);
+
+// The Chairman verifies bills but has no access to location data.
+export const canSeeLocations = (user) => isApproverRole(user) && user?.role !== 'chairman';

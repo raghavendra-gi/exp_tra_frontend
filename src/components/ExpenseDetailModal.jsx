@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { expenseAPI } from '../api/client';
 import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import Modal from './Modal';
-import { formatDate, formatDateTime, formatMoney, statusBadgeClass, statusIcon, isApproverRole } from '../utils/format';
+import { formatDate, formatDateTime, formatMoney, statusBadgeClass, statusIcon, isApproverRole, canSeeLocations } from '../utils/format';
 import TypeIcon from './TypeIcon';
 import CapturedLocations from './CapturedLocations';
 
@@ -312,8 +312,7 @@ export default function ExpenseDetailModal({ expense: listExpense, onClose, onAc
         </>
       )}
 
-      <CapturedLocations data={data} fields={config.fields} />
-
+      {canSeeLocations(user) && <CapturedLocations data={data} fields={config.fields} />}
       {Array.isArray(expense.history) && expense.history.length > 0 && (
         <>
           <div className="section-title">Activity</div>

@@ -1873,6 +1873,7 @@ body.modal-open { overflow:hidden; }
 .role-chip.is-accounts { background:var(--accent-soft); color:var(--accent-ink); }
 .role-chip.is-clerk    { background:var(--st-info-bg); color:var(--st-info-ink); }
 .role-chip.is-op_head  { background:var(--st-query-bg); color:var(--st-query-ink); }
+.role-chip.is-chairman { background:var(--st-warning-bg); color:var(--st-warning-ink); }
 
 @media (max-width:640px) {
   .users-search, .users-search input { width:100%; min-width:0; }

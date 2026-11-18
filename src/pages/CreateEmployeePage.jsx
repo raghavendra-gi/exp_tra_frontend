@@ -14,6 +14,7 @@ const ROLE_OPTIONS = [
   { value: 'clerk', label: 'Clerk (files bills)' },
   { value: 'accounts', label: 'Accounts' },
   { value: 'op_head', label: 'Operational Head' },
+  { value: 'chairman', label: 'Chairman' },
 ];
 
 // Picking this in the Role list lets Accounts type a role name that does not exist yet.
@@ -21,8 +22,8 @@ const NEW_ROLE = '__new__';
 
 // A typed (custom) role is only a label: the user gets plain Employee access (role: 'employee').
 
-// Same comparison the backend uses, so a typed name cannot pose as a built-in role.
-const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead'];
+// Same comparison the backend uses, so a typed name cannot pose as a bu ilt-in role.
+const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead' , 'chairman'];
 const normName = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const EMPTY = {

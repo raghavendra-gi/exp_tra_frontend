@@ -3,13 +3,15 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import LoginPage from './pages/LoginPage';
-import { isApproverRole } from './utils/format';
+
 import ProfilePage from './pages/ProfilePage';
 import CreateEmployeePage from './pages/CreateEmployeePage';
 import UsersPage from './pages/UsersPage';
 
 import OpHeadDashboardPage from './pages/OpHeadDashboardPage';
 import AccountsDashboardPage from './pages/AccountsDashboardPage';
+import { isApproverRole, canSeeLocations } from './utils/format';      // add canSeeLocations
+import ChairmanDashboardPage from './pages/ChairmanDashboardPage';     // new import
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const SelectExpenseTypePage = lazy(() => import('./pages/SelectExpenseTypePage'));
@@ -55,6 +57,7 @@ function AppRoutes() {
     user?.role === 'op_head' ? '/op-head-dashboard' :
     user?.role === 'manager' ? '/dashboard' : 
     user?.role === 'employee' ? '/my' :
+    user?.role === 'chairman' ? '/chairman-dashboard' :
     user ? '/expenses' :
     '/login';
 
@@ -67,6 +70,7 @@ function AppRoutes() {
         <Route path="/accounts-dashboard" element={user?.role === 'accounts' ? <AccountsDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/op-head-dashboard" element={user?.role === 'op_head' ? <OpHeadDashboardPage /> : <Navigate to={home} replace />} />
         <Route path="/my" element={user?.role === 'employee' ? <DashboardPage /> : <Navigate to={home} replace />} />
+        <Route path="/chairman-dashboard" element={user?.role === 'chairman' ? <ChairmanDashboardPage /> : <Navigate to={home} replace />} />
 
         {/* Only the Accounts team can create users (the backend enforces this too). */}
         <Route
@@ -77,8 +81,8 @@ function AppRoutes() {
         {/* Accounts only: see every user and edit their details (the backend enforces this too). */}
         <Route path="/users" element={user?.role === 'accounts' ? <UsersPage /> : <Navigate to={home} replace />} />
 
-        {/* Approvers only: where employees captured their location with an expense. */}
-        <Route path="/locations" element={isApproverRole(user) ? <LocationLogPage /> : <Navigate to={home} replace />} />
+        {/* Accounts and Op Head only. The Chairman has no access to location data. */}
+<Route path="/locations" element={canSeeLocations(user) ? <LocationLogPage /> : <Navigate to={home} replace />} />
 
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />

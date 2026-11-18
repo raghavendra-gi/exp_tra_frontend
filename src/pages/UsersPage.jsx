@@ -19,18 +19,19 @@ const ROLE_OPTIONS = [
   { value: 'clerk', label: 'Clerk (files bills)' },
   { value: 'accounts', label: 'Accounts' },
   { value: 'op_head', label: 'Operational Head' },
+  { value: 'chairman', label: 'Chairman' },
 ];
-const ROLE_LABEL = { employee: 'Employee', clerk: 'Clerk', accounts: 'Accounts', op_head: 'Operational Head' };
+const ROLE_LABEL = { employee: 'Employee', clerk: 'Clerk', accounts: 'Accounts', op_head: 'Operational Head' , chairman: 'Chairman' };
 const CUSTOM_ROLE = '__custom__';
 
 // Same comparison the backend makes, so a typed label cannot pose as a built-in role.
-const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead'];
+const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead', 'chairman'];
 const squash = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const roleText = (u) => u.role_title || ROLE_LABEL[u.role] || u.role;
 
 // The project has two kinds of people: the users who file bills, and the approvers who review them.
-const APPROVER_ROLES = ['accounts', 'op_head'];
+const APPROVER_ROLES = ['accounts', 'op_head', 'chairman'];
 const isApprover = (u) => APPROVER_ROLES.includes(u.role);
 const GROUPS = [
   { key: 'all', label: 'All' },

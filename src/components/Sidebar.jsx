@@ -1,10 +1,11 @@
 import { memo, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { isApproverRole } from '../utils/format';
-import { readCache, subscribeCache } from '../utils/expenseCache';
 
-const ROLE_LABEL = { clerk: 'Clerk', accounts: 'Accounts', op_head: 'Op Head', employee: 'Employee' };
+import { readCache, subscribeCache } from '../utils/expenseCache';
+import { isApproverRole, canSeeLocations } from '../utils/format';
+const ROLE_LABEL = { clerk: 'Clerk', accounts: 'Accounts', op_head: 'Op Head', chairman: 'Chairman', employee: 'Employee' };
+
 /*
  * Navigation in two groups:
  *   Workspace — dashboard and the full list
@@ -91,6 +92,7 @@ function Sidebar({ isOpen, onClose }) {
   to={
     user?.role === 'accounts' ? '/accounts-dashboard' : 
     user?.role === 'op_head' ? '/op-head-dashboard' : 
+    user?.role === 'chairman' ? '/chairman-dashboard' :
     user?.role === 'clerk' ? '/dashboard' : 
     '/my'
   } 
@@ -120,7 +122,7 @@ function Sidebar({ isOpen, onClose }) {
                 </NavLink>
               </li>
             )}
-            {isApprover && (
+            {canSeeLocations(user) && (
               <li>
                 <NavLink to="/locations" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
                   <svg className="icon" aria-hidden="true"><use href="#i-pin" /></svg>

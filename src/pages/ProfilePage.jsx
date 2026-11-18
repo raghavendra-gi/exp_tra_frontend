@@ -10,6 +10,7 @@ const ROLE_LABELS = {
   clerk: 'Clerk',
   accounts: 'Accounts',
   op_head: 'Operational Head',
+  chairman: 'Chairman',
 };
 
 export default function ProfilePage() {
