@@ -82,8 +82,7 @@ function AppRoutes() {
         <Route path="/users" element={user?.role === 'accounts' ? <UsersPage /> : <Navigate to={home} replace />} />
 
         {/* Accounts and Op Head only. The Chairman has no access to location data. */}
-<Route path="/locations" element={canSeeLocations(user) ? <LocationLogPage /> : <Navigate to={home} replace />} />
-
+        <Route path="/locations" element={user?.role === 'accounts' ? <LocationLogPage /> : <Navigate to={home} replace />} />
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />
         <Route path="/form" element={user ? <ExpenseFormPage /> : <Navigate to="/login" replace />} />

@@ -122,14 +122,14 @@ function Sidebar({ isOpen, onClose }) {
                 </NavLink>
               </li>
             )}
-            {canSeeLocations(user) && (
-              <li>
-                <NavLink to="/locations" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
-                  <svg className="icon" aria-hidden="true"><use href="#i-pin" /></svg>
-                  <span className="sidebar-label">Location log</span>
-                </NavLink>
-              </li>
-            )}
+            {user?.role === 'accounts' && (
+  <li>
+    <NavLink to="/locations" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+      <svg className="icon" aria-hidden="true"><use href="#i-pin" /></svg>
+      <span className="sidebar-label">Location log</span>
+    </NavLink>
+  </li>
+)}
             {queues.map((q) => (
               <li key={q.tab}>
                 <Link
