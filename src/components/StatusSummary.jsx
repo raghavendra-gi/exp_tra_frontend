@@ -3,11 +3,11 @@ import { useAuth } from '../AuthContext';
 import { formatMoney, isApproverRole } from '../utils/format';
 
 const STATUSES = [
-  { key: 'pending',    status: 'Pending',     label: 'Pending',     hint: 'Awaiting decision' },
-  { key: 'queryraised', status: 'Query Raised', label: 'Query',    hint: 'Waiting for employee' },
-  { key: 'approved',   status: 'Approved',    label: 'Approved',    hint: 'Accepted by Accounts' },
-  { key: 'rejected',   status: 'Rejected',    label: 'Rejected',    hint: 'Sent back with reason' },
-  { key: 'inprogress', status: 'In Progress', label: 'In progress', hint: 'Trips not yet ended' },
+  { key: 'pending',     status: 'Pending',      label: 'Pending',     hint: 'Awaiting decision' },
+  { key: 'queryraised', status: 'Query Raised', label: 'Query',       hint: 'Waiting for employee' },
+  { key: 'approved',    status: 'Approved',     label: 'Approved',    hint: 'Accepted by Accounts' },
+  // REMOVED: { key: 'rejected', status: 'Rejected', ... }
+  { key: 'inprogress',  status: 'In Progress',  label: 'In progress', hint: 'Trips not yet ended' },
 ];
 
 // Accept activeStatus as a prop

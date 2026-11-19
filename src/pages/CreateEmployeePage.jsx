@@ -9,9 +9,19 @@ import Layout from '../components/Layout';
  * creates a login for a new employee, clerk, accounts user or operational head.
  */
 
-const ROLE_OPTIONS = [
+// 1. Define Categories
+const CATEGORY_OPTIONS = [
+  { value: 'employee', label: 'Employee / Clerk (Files bills)' },
+  { value: 'approver', label: 'Approver (Reviews bills)' },
+];
+
+// 2. Split Roles by Category
+const EMPLOYEE_ROLES = [
   { value: 'employee', label: 'Employee' },
-  { value: 'clerk', label: 'Clerk (files bills)' },
+  { value: 'clerk', label: 'Clerk' },
+];
+
+const APPROVER_ROLES = [
   { value: 'accounts', label: 'Accounts' },
   { value: 'op_head', label: 'Operational Head' },
   { value: 'chairman', label: 'Chairman' },
@@ -19,10 +29,6 @@ const ROLE_OPTIONS = [
 
 // Picking this in the Role list lets Accounts type a role name that does not exist yet.
 const NEW_ROLE = '__new__';
-
-// A typed (custom) role is only a label: the user gets plain Employee access (role: 'employee').
-
-// Same comparison the backend uses, so a typed name cannot pose as a bu ilt-in role.
 const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead' , 'chairman'];
 const normName = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -30,6 +36,7 @@ const EMPTY = {
   username: '',
   display_name: '',
   password: '',
+  category: 'employee', // NEW: Added category field
   role: 'employee',
   new_role_name: '',
   email: '',
@@ -47,12 +54,22 @@ export default function CreateEmployeePage() {
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState('');
 
+  // Derived state
   const isNewRole = form.role === NEW_ROLE;
+  const availableRoles = form.category === 'employee' ? EMPLOYEE_ROLES : APPROVER_ROLES;
 
   const set = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
     if (errors[name]) setErrors((er) => ({ ...er, [name]: '' }));
+  };
+
+  // NEW: Handle category change and reset the role to the default of that category
+  const handleCategoryChange = (e) => {
+    const category = e.target.value;
+    const defaultRole = category === 'employee' ? 'employee' : 'accounts';
+    setForm((f) => ({ ...f, category, role: defaultRole, new_role_name: '' }));
+    setErrors({});
   };
 
   const validate = () => {
@@ -86,7 +103,7 @@ export default function CreateEmployeePage() {
           username: form.username.trim(),
           display_name: form.display_name.trim(),
           password: form.password,
-          // A typed role keeps the name as a label and gets Employee access.
+          // A typed custom role keeps the name as a label and gets Employee access.
           role: isNewRole ? 'employee' : form.role,
           role_title: isNewRole ? form.new_role_name.trim().replace(/\s+/g, ' ') : null,
           email: form.email.trim() || null,
@@ -98,7 +115,6 @@ export default function CreateEmployeePage() {
       setForm(EMPTY);
       setErrors({});
     } catch (err) {
-      // e.g. "Username already registered", "Only Accounts team can create new users"
       setBanner(err.message || 'Could not create the user.');
     } finally {
       setBusy(false);
@@ -170,6 +186,14 @@ export default function CreateEmployeePage() {
             {errors.password && <p className="field-error">{errors.password}</p>}
           </div>
 
+          {/* NEW: User Type (Category) Selection */}
+          <div className="form-group">
+            <label htmlFor="ce-category">User Type *</label>
+            <select id="ce-category" name="category" value={form.category} onChange={handleCategoryChange}>
+              {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+          </div>
+
           <div className="form-group">
             <label htmlFor={isNewRole ? 'ce-newrole' : 'ce-role'}>{isNewRole ? 'New role name *' : 'Role'}</label>
             {isNewRole ? (
@@ -182,7 +206,11 @@ export default function CreateEmployeePage() {
                 />
                 <button
                   type="button" className="btn btn-outline btn-icon"
-                  onClick={() => { setForm((f) => ({ ...f, role: 'employee', new_role_name: '' })); setErrors((er) => ({ ...er, new_role_name: '' })); }}
+                  onClick={() => { 
+                    const defaultRole = form.category === 'employee' ? 'employee' : 'accounts';
+                    setForm((f) => ({ ...f, role: defaultRole, new_role_name: '' })); 
+                    setErrors((er) => ({ ...er, new_role_name: '' })); 
+                  }}
                   aria-label="Back to the role list" title="Back to the role list"
                 >
                   <svg className="icon" aria-hidden="true"><use href="#i-close" /></svg>
@@ -190,7 +218,8 @@ export default function CreateEmployeePage() {
               </div>
             ) : (
               <select id="ce-role" name="role" value={form.role} onChange={set}>
-                {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                {/* Dynamically render only the roles for the selected category */}
+                {availableRoles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                 <option value={NEW_ROLE}>+ Add a new role…</option>
               </select>
             )}

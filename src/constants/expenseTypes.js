@@ -1,7 +1,7 @@
 export const TRANSPORT_BY_TICKET  = ['Bus', 'Train', 'Flight'];
 export const TRANSPORT_BY_VEHICLE = ['Car', 'Bike'];
 export const EXPENSE_TYPES = {
-'Pooja': {
+  'Pooja': {
     icon: '🙏', title: 'Pooja Expenses',
     fields: [
       /*{ key: 'items', type: 'checkboxes', label: 'Items / Approvals', required: true, allowOther: true,
@@ -35,10 +35,13 @@ export const EXPENSE_TYPES = {
         options: [...TRANSPORT_BY_TICKET, ...TRANSPORT_BY_VEHICLE] },
       { key: 'ticketBill', type: 'file', required: true, checkDuplicate: true, label: 'Ticket bill', title: 'Upload ticket bill', hint: 'PNG, JPG or PDF up to 5 MB',
         showIf: v => TRANSPORT_BY_TICKET.includes(v.transport) },
-      { key: 'startMeter', type: 'file', required: true, label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
+      
+      // CORRECTED: Added checkDuplicate: true directly to the original fields
+      { key: 'startMeter', type: 'file', required: true, checkDuplicate: true, label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
-      { key: 'endMeter',   type: 'file', required: true, label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
+      { key: 'endMeter',   type: 'file', required: true, checkDuplicate: true, label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
+        
       { key: 'amount',     type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
       { key: 'remarks',    type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here' },
     ]
@@ -49,14 +52,20 @@ export const EXPENSE_TYPES = {
     fields: [
       { key: 'date',            type: 'date',   label: 'Date', required: true, default: 'today', stage: 'start' },
       { key: 'startLocation',   type: 'place',  label: 'Start location', placeholder: 'Where are you starting?', required: true, stage: 'start', geolocate: true },
-      { key: 'startMeterImage', type: 'file',   label: 'Start meter image', title: 'Upload start meter image',
+      
+      // CORRECTED: Added checkDuplicate: true directly here
+      { key: 'startMeterImage', type: 'file',   label: 'Start meter image', title: 'Upload start meter image', checkDuplicate: true,
         hint: "Photo of your vehicle's odometer at the start", required: true, stage: 'start' },
+        
       { key: 'endLocation',     type: 'place',  label: 'End location', placeholder: 'Where did you arrive?', required: true, stage: 'end' },
       { key: 'routeInfo',       type: 'route',  label: 'Route', fromKey: 'startLocation', toKey: 'endLocation', kmKey: 'distanceKm', stage: 'end' },
       { key: 'distanceKm',      type: 'number', label: 'Total distance (km)', placeholder: 'Filled automatically from the route',
         required: true, min: 0.1, unit: 'km', autoKm: true, stage: 'end' },
-      { key: 'endMeterImage',   type: 'file',   label: 'End meter image', title: 'Upload end meter image',
+        
+      // CORRECTED: Added checkDuplicate: true directly here
+      { key: 'endMeterImage',   type: 'file',   label: 'End meter image', title: 'Upload end meter image', checkDuplicate: true,
         hint: 'Photo of the odometer at the end', required: true, stage: 'end' },
+        
       { key: 'remarks',         type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here', stage: 'end' },
     ]
   },

@@ -15,7 +15,7 @@ const TABS = [
   { key: 'pending', label: 'Pending', status: 'Pending' },
   { key: 'query', label: 'Query', status: 'Query Raised' },
   { key: 'approved', label: 'Approved', status: 'Approved' },
-  { key: 'rejected', label: 'Rejected', status: 'Rejected' },
+  /*{ key: 'rejected', label: 'Rejected', status: 'Rejected' },*/
   { key: 'inprogress', label: 'In progress', status: 'In Progress' },
 ];
 const STATUS_TO_TAB = Object.fromEntries(TABS.filter((t) => t.status).map((t) => [t.status, t.key]));

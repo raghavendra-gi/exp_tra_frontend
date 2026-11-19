@@ -21,11 +21,11 @@ function Sidebar({ isOpen, onClose }) {
 
   const list = useSyncExternalStore(subscribeCache, () => readCache(user?.username || null));
   const counts = useMemo(() => {
-    const c = { pending: 0, query: 0, rejected: 0, inprogress: 0, approved: 0 };
+    const c = { pending: 0, query: 0, /*rejected: 0,*/ inprogress: 0, approved: 0 };
     for (const e of list || []) {
       if (e.status === 'Pending') c.pending += 1;
       else if (e.status === 'Query Raised') c.query += 1;
-      else if (e.status === 'Rejected') c.rejected += 1;
+      /*else if (e.status === 'Rejected') c.rejected += 1;*/
       else if (e.status === 'In Progress') c.inprogress += 1;
       else if (e.status === 'Approved') c.approved += 1;
     }
@@ -58,13 +58,13 @@ function Sidebar({ isOpen, onClose }) {
       { tab: 'pending', label: 'Awaiting review', icon: 'i-inbox', n: counts.pending, tone: 'warning' },
       { tab: 'query', label: 'Query raised', icon: 'i-comment', n: counts.query },
       { tab: 'approved', label: 'Approved', icon: 'i-check', n: counts.approved },
-      { tab: 'rejected', label: 'Rejected', icon: 'i-x', n: counts.rejected },
+     /* { tab: 'rejected', label: 'Rejected', icon: 'i-x', n: counts.rejected },*/
     ]
     : [
       { tab: 'pending', label: 'Awaiting approval', icon: 'i-inbox', n: counts.pending },
       { tab: 'query', label: 'Query from Accounts', icon: 'i-comment', n: counts.query, tone: 'critical' },
       { tab: 'inprogress', label: 'Active trips', icon: 'i-route', n: counts.inprogress, tone: 'info' },
-      { tab: 'rejected', label: 'Needs fixing', icon: 'i-alert', n: counts.rejected, tone: 'critical' },
+      /*{ tab: 'rejected', label: 'Needs fixing', icon: 'i-alert', n: counts.rejected, tone: 'critical' },*/
     ];
 
   return (

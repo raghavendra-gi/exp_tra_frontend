@@ -28,8 +28,8 @@ import TypeIcon from '../components/TypeIcon';
 const LIST_COUNT = 8;
 const CAT_COUNT = 5;
 const STORE_KEY = 'et.dashboard.view';
-const STATUS_OPTIONS = ['Pending', 'Query Raised', 'Approved', 'Rejected', 'In Progress'];
-const STATUS_TAB = { 'Pending': 'pending', 'Query Raised': 'query', 'Approved': 'approved', 'Rejected': 'rejected', 'In Progress': 'inprogress' };
+const STATUS_OPTIONS = ['Pending', 'Query Raised', 'Approved', /*'Rejected',*/ 'In Progress'];
+const STATUS_TAB = { 'Pending': 'pending', 'Query Raised': 'query', 'Approved': 'approved', /*'Rejected': 'rejected',*/ 'In Progress': 'inprogress' };
 const TYPE_OPTIONS = Object.keys(EXPENSE_TYPES);
 
 // Backend address. On Vercel set VITE_API_URL (e.g. https://your-backend.onrender.com);
@@ -392,7 +392,7 @@ export default function DashboardPage() {
                   <span data-status="pending"><i />Pending</span>
                   <span data-status="queryraised"><i />Query</span>
                   <span data-status="approved"><i />Approved</span>
-                  <span data-status="rejected"><i />Rejected</span>
+                  
                   <span data-status="inprogress"><i />In progress</span>
                 </div>
               </div>
