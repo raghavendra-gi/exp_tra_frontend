@@ -11,12 +11,14 @@ import UsersPage from './pages/UsersPage';
 import OpHeadDashboardPage from './pages/OpHeadDashboardPage';
 import AccountsDashboardPage from './pages/AccountsDashboardPage';
 import { isApproverRole, canSeeLocations } from './utils/format';      // add canSeeLocations
+import TripTracker from './components/TripTracker';
 import ChairmanDashboardPage from './pages/ChairmanDashboardPage';     // new import
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
 const SelectExpenseTypePage = lazy(() => import('./pages/SelectExpenseTypePage'));
 const ExpenseFormPage = lazy(() => import('./pages/ExpenseFormPage'));
 const LocationLogPage = lazy(() => import('./pages/LocationLogPage'));
+const LiveTrackingPage = lazy(() => import('./pages/LiveTrackingPage'));
 
 let prefetched = false;
 function prefetchPages(user) {
@@ -83,6 +85,8 @@ function AppRoutes() {
 
         {/* Accounts and Op Head only. The Chairman has no access to location data. */}
         <Route path="/locations" element={user?.role === 'accounts' ? <LocationLogPage /> : <Navigate to={home} replace />} />
+        {/* Live tracking: Accounts and Op Head only (the backend enforces this too). The Chairman has no access. */}
+        <Route path="/live" element={canSeeLocations(user) ? <LiveTrackingPage /> : <Navigate to={home} replace />} />
         <Route path="/expenses" element={user ? <ExpensesPage /> : <Navigate to="/login" replace />} />
         <Route path="/new" element={user ? <SelectExpenseTypePage /> : <Navigate to="/login" replace />} />
         <Route path="/form" element={user ? <ExpenseFormPage /> : <Navigate to="/login" replace />} />
@@ -101,6 +105,7 @@ function App() {
       <ToastProvider>
         <AuthProvider>
           <AppRoutes />
+          <TripTracker />
         </AuthProvider>
       </ToastProvider>
     </HashRouter>

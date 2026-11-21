@@ -130,6 +130,14 @@ function Sidebar({ isOpen, onClose }) {
     </NavLink>
   </li>
 )}
+            {canSeeLocations(user) && (
+              <li>
+                <NavLink to="/live" onClick={onClose} className={({ isActive }) => (isActive ? 'active' : undefined)}>
+                  <svg className="icon" aria-hidden="true"><use href="#i-route" /></svg>
+                  <span className="sidebar-label">Live tracking</span>
+                </NavLink>
+              </li>
+            )}
             {queues.map((q) => (
               <li key={q.tab}>
                 <Link
