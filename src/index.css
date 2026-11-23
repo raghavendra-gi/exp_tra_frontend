@@ -2025,3 +2025,225 @@ body.modal-open { overflow:hidden; }
 
 /* Never print the floating status line */
 body:not(.modal-open) .track-pill { display:none !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   19. LOGIN — PREMIUM BACKGROUND
+   A dark, animated "aurora + mesh + grid" scene behind the card.
+   Scoped to .login-wrap so the rest of the app is unaffected.
+   ══════════════════════════════════════════════════════════════ */
+
+/* The scene itself */
+.login-wrap {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  overflow: hidden;
+  background:
+    /* soft radial glows (brand blue + teal + violet) */
+    radial-gradient(60% 50% at 15% 20%, rgba(59,130,246,.35), transparent 60%),
+    radial-gradient(50% 45% at 85% 15%, rgba(14,165,233,.28), transparent 60%),
+    radial-gradient(60% 55% at 80% 85%, rgba(99,102,241,.30), transparent 60%),
+    radial-gradient(50% 45% at 20% 90%, rgba(16,185,129,.18), transparent 60%),
+    /* deep navy base */
+    linear-gradient(160deg, #0a1020 0%, #0e1a2b 45%, #0b1220 100%);
+}
+
+/* Animated aurora blobs */
+.login-wrap::before,
+.login-wrap::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .55;
+  pointer-events: none;
+  will-change: transform;
+}
+.login-wrap::before {
+  top: -20vmax;
+  left: -15vmax;
+  background: radial-gradient(circle at 30% 30%, #3b82f6, transparent 60%),
+              radial-gradient(circle at 70% 70%, #6366f1, transparent 60%);
+  animation: aurora-a 18s ease-in-out infinite alternate;
+}
+.login-wrap::after {
+  bottom: -22vmax;
+  right: -18vmax;
+  background: radial-gradient(circle at 40% 40%, #06b6d4, transparent 60%),
+              radial-gradient(circle at 60% 60%, #10b981, transparent 60%);
+  animation: aurora-b 22s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-a {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(6vmax, 4vmax, 0) scale(1.15); }
+}
+@keyframes aurora-b {
+  0%   { transform: translate3d(0,0,0) scale(1.05); }
+  100% { transform: translate3d(-7vmax, -5vmax, 0) scale(1.2); }
+}
+
+/* Faint perspective grid overlay */
+.login-wrap {
+  background-image:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+    radial-gradient(60% 50% at 15% 20%, rgba(59,130,246,.35), transparent 60%),
+    radial-gradient(50% 45% at 85% 15%, rgba(14,165,233,.28), transparent 60%),
+    radial-gradient(60% 55% at 80% 85%, rgba(99,102,241,.30), transparent 60%),
+    radial-gradient(50% 45% at 20% 90%, rgba(16,185,129,.18), transparent 60%),
+    linear-gradient(160deg, #0a1020 0%, #0e1a2b 45%, #0b1220 100%);
+  background-size: 44px 44px, 44px 44px, auto, auto, auto, auto, auto;
+  background-position: center, center, 0 0, 0 0, 0 0, 0 0, 0 0;
+}
+
+/* ── Glass card ── */
+.login-box {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  padding: 40px 36px 32px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.92);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,.65);
+  box-shadow:
+    0 30px 60px -20px rgba(2,6,23,.55),
+    0 10px 30px -10px rgba(2,6,23,.35),
+    inset 0 1px 0 rgba(255,255,255,.8);
+  animation: login-card-in .6s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes login-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Glowing ring behind the card */
+.login-box::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 20px;
+  z-index: -1;
+  background: linear-gradient(135deg, rgba(59,130,246,.8), rgba(99,102,241,.6), rgba(16,185,129,.6));
+  filter: blur(14px);
+  opacity: .45;
+}
+
+/* Logo tweak: gentle float + ring */
+.login-logo {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  background: #fff;
+  padding: 8px;
+  box-shadow:
+    0 8px 20px rgba(11,87,201,.25),
+    0 0 0 6px rgba(59,130,246,.10);
+  animation: logo-float 6s ease-in-out infinite;
+}
+@keyframes logo-float {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-6px); }
+}
+
+/* Typography on the card */
+.login-box h1 {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--navy-900);
+  margin-bottom: 6px;
+}
+.login-box .login-sub {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 14px;
+  margin-bottom: 26px;
+}
+
+/* Inputs get a soft inner shadow + accent ring on focus */
+.login-box .form-group { margin-bottom: 16px; }
+.login-box input {
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 11px 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.login-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.18);
+  outline: none;
+}
+
+/* Primary button: gradient + subtle lift */
+.login-box .btn-primary.btn-block {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #0b57c9 100%);
+  box-shadow: 0 10px 20px -8px rgba(37,99,235,.55);
+  transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+}
+.login-box .btn-primary.btn-block:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 14px 26px -10px rgba(37,99,235,.6);
+}
+.login-box .btn-primary.btn-block:active { transform: translateY(0); }
+
+/* Dark mode: make the card a dark glass panel instead of white */
+:root[data-theme="dark"] .login-box {
+  background: rgba(21,27,36,.82);
+  border-color: rgba(255,255,255,.08);
+  box-shadow:
+    0 30px 60px -20px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+:root[data-theme="dark"] .login-box h1 { color: #eef1f5; }
+:root[data-theme="dark"] .login-box input {
+  background: #1a212c;
+  color: #eef1f5;
+  border-color: #2a3341;
+}
+:root[data-theme="dark"] .login-box input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(91,151,240,.22);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .login-box {
+    background: rgba(21,27,36,.82);
+    border-color: rgba(255,255,255,.08);
+  }
+  :root:not([data-theme="light"]) .login-box h1 { color: #eef1f5; }
+  :root:not([data-theme="light"]) .login-box input {
+    background: #1a212c; color: #eef1f5; border-color: #2a3341;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .login-wrap::before,
+  .login-wrap::after,
+  .login-logo,
+  .login-box { animation: none !important; }
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+  .login-box { padding: 32px 22px 26px; border-radius: 16px; }
+  .login-box h1 { font-size: 21px; }
+}
