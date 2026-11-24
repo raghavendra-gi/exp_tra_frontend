@@ -38,6 +38,7 @@ function freshness(trip, extraSeconds) {
 
 export default function LiveTrackingPage() {
   const [trips, setTrips] = useState([]);
+  const [notSharing, setNotSharing] = useState(0);              // other trips in progress whose employee did not allow tracking
   const [fetchedAt, setFetchedAt] = useState(Date.now());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,6 +58,7 @@ export default function LiveTrackingPage() {
     try {
       const res = await expenseAPI('/tracking/live');
       setTrips(res?.trips || []);
+      setNotSharing(res?.not_sharing || 0);
       setFetchedAt(Date.now());
       setError('');
     } catch (err) {
@@ -224,7 +226,7 @@ export default function LiveTrackingPage() {
   return (
     <Layout
       title="Live tracking"
-      subtitle={loading ? 'Loading…' : `${trips.length} ${trips.length === 1 ? 'trip' : 'trips'} in progress · ${reporting} reporting a location`}
+      subtitle={loading ? 'Loading…' : `${trips.length} ${trips.length === 1 ? 'trip' : 'trips'} sharing their location · ${reporting} reporting a position`}
       headerRight={headerRight}
     >
       {error && (
@@ -238,8 +240,8 @@ export default function LiveTrackingPage() {
         <div className="card">
           <EmptyState
             icon="i-route"
-            title="No trips in progress"
-            text="When an employee starts a Regional Trip and agrees to share their location, it appears here."
+            title="No trips are sharing their location"
+            text="A trip appears here after the employee submits it and taps “Allow tracking”."
           />
         </div>
       )}
@@ -313,6 +315,14 @@ export default function LiveTrackingPage() {
             })}
           </ul>
       </div>
+
+      {notSharing > 0 && (
+        <p className="live-note" role="status" style={{ marginTop: 'var(--sp-3)' }}>
+          {notSharing === 1
+            ? '1 other trip is in progress but is not sharing its location.'
+            : `${notSharing} other trips are in progress but are not sharing their location.`}
+        </p>
+      )}
 
       {trips.length > 0 && reporting === 0 && (
         <p className="live-note" role="status" style={{ marginTop: 'var(--sp-3)' }}>

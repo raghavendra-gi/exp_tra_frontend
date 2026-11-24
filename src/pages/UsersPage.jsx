@@ -103,7 +103,7 @@ function EditUserModal({ user, isSelf, onClose, onSaved }) {
   };
 
   return (
-    <Modal isOpen onClose={busy ? undefined : onClose} title={`Edit ${user.display_name}`}>
+    <Modal isOpen onClose={busy ? undefined : onClose} title={`Edit ${user.display_name}`} size="lg">
       <form onSubmit={submit} noValidate>
         {banner && (
           <div className="form-banner banner-error" role="alert" style={{ marginBottom: 16 }}>
@@ -112,15 +112,39 @@ function EditUserModal({ user, isSelf, onClose, onSaved }) {
           </div>
         )}
 
-        <div className="form-grid">
+        {/* --- NEW HEADER SECTION --- */}
+        <div className="edit-user-header">
+          <div className="eu-avatar">
+            {user.display_name?.substring(0, 2).toUpperCase() || '??'}
+            <span className="eu-status-dot" />
+          </div>
+          <div className="eu-header-info">
+            <div className="eu-title-row">
+              <h2>{user.display_name || user.username}</h2>
+              <span className="eu-badge">USER PROFILE</span>
+            </div>
+            <p className="eu-subtitle">
+              Account ID: <span className="eu-mono">{user.username}</span> 
+            </p>
+          </div>
+        </div>
+
+        <div className="eu-divider" />
+
+        {/* --- FORM FIELDS SECTION --- */}
+        <div className="form-grid" style={{ gap: '24px' }}>
+          
           <div className="form-group">
-            <label htmlFor="eu-username">Username</label>
+            <div className="eu-label-row">
+              <label htmlFor="eu-username">Username</label>
+              <span className="eu-readonly-badge"><svg className="icon" style={{fontSize: 10}}><use href="#i-lock"/></svg> Read-only</span>
+            </div>
             <input id="eu-username" type="text" value={user.username} readOnly disabled />
-            <p className="form-card-sub">The login name cannot be changed.</p>
+            <p className="eu-hint">The login name cannot be changed.</p>
           </div>
 
           <div className="form-group">
-            <label htmlFor="eu-name">Full name *</label>
+            <label htmlFor="eu-name">Full Name <span className="req">*</span></label>
             <input
               id="eu-name" name="display_name" type="text" autoComplete="off"
               value={form.display_name} onChange={set}
@@ -130,7 +154,10 @@ function EditUserModal({ user, isSelf, onClose, onSaved }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor={isCustom ? 'eu-custom' : 'eu-role'}>{isCustom ? 'Role name *' : 'Role'}</label>
+            <div className="eu-label-row">
+              <label htmlFor={isCustom ? 'eu-custom' : 'eu-role'}>{isCustom ? 'Role Name *' : 'Role'}</label>
+              {isSelf && <span className="eu-self-badge">SELF PROTECTED</span>}
+            </div>
             {isCustom ? (
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
@@ -152,7 +179,7 @@ function EditUserModal({ user, isSelf, onClose, onSaved }) {
                 <option value={CUSTOM_ROLE}>+ Custom role…</option>
               </select>
             )}
-            {isSelf && <p className="form-card-sub">You cannot change your own role.</p>}
+            {isSelf && <p className="eu-hint is-warning"><svg className="icon"><use href="#i-alert"/></svg> You cannot change your own role.</p>}
             {errors.custom_role && <p className="field-error">{errors.custom_role}</p>}
           </div>
 
@@ -167,38 +194,58 @@ function EditUserModal({ user, isSelf, onClose, onSaved }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="eu-branch">Branch</label>
-            <input id="eu-branch" name="branch" type="text" maxLength={100} value={form.branch} onChange={set} placeholder="optional" />
+            <div className="eu-label-row">
+              <label htmlFor="eu-branch">Branch</label>
+              <span className="eu-optional-text">optional</span>
+            </div>
+            <input id="eu-branch" name="branch" type="text" maxLength={100} value={form.branch} onChange={set} placeholder="e.g. Main HQ" />
           </div>
 
           <div className="form-group">
             <label htmlFor="eu-designation">Designation</label>
-            <input id="eu-designation" name="designation" type="text" maxLength={100} value={form.designation} onChange={set} placeholder="optional" />
-          </div>
-
-          <div className="form-group span-2">
-            <label htmlFor="eu-password">Reset password</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                id="eu-password" name="new_password" type={showPassword ? 'text' : 'password'} autoComplete="new-password"
-                value={form.new_password} onChange={set} placeholder="Leave blank to keep the current password" style={{ flex: 1 }}
-                aria-invalid={errors.new_password ? 'true' : undefined}
-              />
-              <button
-                type="button" className="btn btn-outline btn-icon"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                <svg className="icon" aria-hidden="true"><use href={showPassword ? '#i-eye-off' : '#i-eye'} /></svg>
-              </button>
-            </div>
-            {errors.new_password && <p className="field-error">{errors.new_password}</p>}
+            <input id="eu-designation" name="designation" type="text" maxLength={100} value={form.designation} onChange={set} placeholder="e.g. Accounts Handling" />
           </div>
         </div>
 
-        <div className="btn-row btn-row-end" style={{ marginTop: 'var(--sp-5)' }}>
-          <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
-          <button type="submit" className={`btn btn-primary${busy ? ' is-busy' : ''}`} disabled={busy}>Save changes</button>
+        {/* --- SECURITY SECTION --- */}
+        <div className="eu-section-title">
+          <svg className="icon" aria-hidden="true"><use href="#i-lock" /></svg> Security Credential
+        </div>
+
+        <div className="form-group span-2">
+          <label htmlFor="eu-password">Reset Password</label>
+          <div style={{ display: 'flex', gap: 3 }}>
+            <input
+              id="eu-password" name="new_password" type={showPassword ? 'text' : 'password'} autoComplete="new-password"
+              value={form.new_password} onChange={set} placeholder="Leave blank to keep the current password" style={{ flex: 1 }}
+              aria-invalid={errors.new_password ? 'true' : undefined}
+            />
+            <button
+              type="button" className="btn btn-outline btn-icon"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              <svg className="icon" aria-hidden="true"><use href={showPassword ? '#i-eye-off' : '#i-eye'} /></svg>
+            </button>
+          </div>
+          <div className="eu-flex-hints">
+            <p className="eu-hint" style={{ color: 'var(--ink-2)' }}>Status: <strong>Encrypted</strong></p>
+          </div>
+          {errors.new_password && <p className="field-error">{errors.new_password}</p>}
+        </div>
+
+        {/* --- FOOTER ACTIONS --- */}
+        <div className="eu-footer">
+          <div className="eu-last-modified">
+            <svg className="icon" aria-hidden="true"><use href="#i-clock" /></svg>
+            Last modified: Just now
+          </div>
+          <div className="btn-row">
+            <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>Cancel</button>
+            <button type="submit" className={`btn btn-primary${busy ? ' is-busy' : ''}`} disabled={busy}>
+              <svg className="icon" aria-hidden="true"><use href="#i-check" /></svg> Save changes
+            </button>
+          </div>
         </div>
       </form>
     </Modal>

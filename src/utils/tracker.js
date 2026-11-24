@@ -42,13 +42,32 @@ const MAX_AGE_MS = 48 * 3600_000;       // the server ignores older points anywa
 const queueKey = (u) => `et.track.queue.v1:${u}`;
 const consentKey = (u) => `et.track.consent.v1:${u}`;
 
-/* ───────────── consent (asked once per person, remembered on this phone) ───────────── */
-export function getConsent(username) {
-  try { return localStorage.getItem(consentKey(username)) || null; } catch { return null; }   // 'granted' | 'declined' | null
+/* ───────────── the person's answer, per trip ─────────────
+ * The answer itself lives on the server (it decides what Accounts may see). This phone/browser also remembers
+ * that IT is the device that reports for the trip, so a second device signed in to the same account does not
+ * start reporting a different position for the same trip.
+ */
+const choiceKey = (u, tripId) => `et.track.trip.v1:${u}:${tripId}`;
+
+export function getDeviceChoice(username, tripId) {
+  try { return localStorage.getItem(choiceKey(username, tripId)) || null; } catch { return null; }   // 'granted' | 'declined' | null
 }
-export function setConsent(username, value) {
-  try { localStorage.setItem(consentKey(username), value); } catch { /* storage blocked: ask again next time */ }
+export function setDeviceChoice(username, tripId, value) {
+  try { localStorage.setItem(choiceKey(username, tripId), value); } catch { /* storage blocked: the pill offers "Turn on" again */ }
 }
+/** Earlier versions asked once per person instead of per trip. Trips already allowed on the server keep tracking. */
+export function hadLegacyConsent(username) {
+  try { return localStorage.getItem(consentKey(username)) === 'granted'; } catch { return false; }
+}
+
+/* "Ask now": the trip form calls askTrackingConsent(tripId) right after a trip was submitted; TripTracker shows the dialog. */
+let pendingAsk = null;
+const askListeners = new Set();
+const setPendingAsk = (value) => { if (pendingAsk !== value) { pendingAsk = value; askListeners.forEach((fn) => fn()); } };
+export function askTrackingConsent(tripId) { setPendingAsk(Number.isFinite(Number(tripId)) ? Number(tripId) : null); }
+export function clearTrackingAsk() { setPendingAsk(null); }
+export function getPendingAsk() { return pendingAsk; }
+export function subscribeAsk(fn) { askListeners.add(fn); return () => askListeners.delete(fn); }
 
 /* ───────────── state ───────────── */
 const state = {
@@ -201,8 +220,8 @@ export async function flushNow() {
     if (err?.authExpired) {
       // The login ran out (long trip). Keep every point; they are sent once the person signs in again.
       state.signInNeeded = true;
-    } else if (current != null && /trip not found|only employees and clerks/i.test(msg)) {
-      // The trip does not exist / is not mine: it will never be accepted, so stop keeping its points.
+    } else if (current != null && /trip not found|only employees and clerks|not allowed for this trip/i.test(msg)) {
+      // The trip does not exist, is not mine, or tracking is not allowed for it: it will never be accepted, so stop keeping its points.
       delete state.queue[current];
       state.trips.delete(Number(current));
       state.failures = 0;                        // not a connection problem: do not slow down the next upload

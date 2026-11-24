@@ -7,6 +7,7 @@ import Layout from '../components/Layout';
 import FieldRenderer from '../components/FieldRenderer';
 import { fileToDataUrl, compressImage, newFileId } from '../utils/fileUtils';
 import { invalidateExpenses } from '../hooks/useExpenses';
+import { askTrackingConsent } from '../utils/tracker';
 import { todayKey } from '../utils/dates';
 import TypeIcon from '../components/TypeIcon';
 
@@ -180,7 +181,7 @@ function ExpenseForm() {
         else toast('Expense updated.', 'success');
       } else {
         // ── CREATE NEW ──
-        await expenseAPI('/expenses', {
+        const created = await expenseAPI('/expenses', {
           method: 'POST',
           body: JSON.stringify({
             type: expenseType,
@@ -191,6 +192,8 @@ function ExpenseForm() {
 
         if (config.twoStage && currentStage === 'start') {
           toast('Trip started. End it from the dashboard when you arrive.', 'success', { duration: 6000 });
+          // The trip is now with Accounts: ask whether to share the live location for it (see TripTracker).
+          if (created?.id) askTrackingConsent(created.id);
         } else {
           toast('Expense submitted.', 'success');
         }
