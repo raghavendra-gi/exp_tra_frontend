@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Layout from '../components/Layout';
 import { EmptyState } from '../components/ExpenseTable';
 import { expenseAPI } from '../api/client';
-import { loadGoogleMaps } from '../utils/mapsLoader';
+import { loadGoogleMaps, mapsAuthFailed } from '../utils/mapsLoader';
 import { formatAccuracy, mapUrl } from '../utils/geo';
 import { formatDateTime } from '../utils/format';
 
@@ -45,6 +45,7 @@ export default function LiveTrackingPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [path, setPath] = useState(null);                       // route of the selected trip
   const [mapState, setMapState] = useState('loading');          // loading | ready | unavailable
+  const [keyRejected, setKeyRejected] = useState(() => mapsAuthFailed());   // Google refused the key for this app's address
   const [, setTick] = useState(0);
 
   const mapDivRef = useRef(null);
@@ -107,6 +108,13 @@ export default function LiveTrackingPage() {
   useEffect(() => {
     if (selectedId && !loading && !trips.some((t) => t.expense_id === selectedId)) setSelectedId(null);
   }, [trips, selectedId, loading]);
+
+  // Google shows its own "Oops! Something went wrong" box when it refuses the key for this address; explain it here.
+  useEffect(() => {
+    const onRejected = () => setKeyRejected(true);
+    window.addEventListener('maps-auth-failed', onRejected);
+    return () => window.removeEventListener('maps-auth-failed', onRejected);
+  }, []);
 
   /* ───────── map ───────── */
   useEffect(() => {
@@ -233,6 +241,17 @@ export default function LiveTrackingPage() {
         <div className="form-banner banner-error" role="alert" style={{ margin: '0 0 var(--sp-3)' }}>
           <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg>
           <span>{error}</span>
+        </div>
+      )}
+
+      {keyRejected && (
+        <div className="form-banner banner-warn" role="alert" style={{ margin: '0 0 var(--sp-3)' }}>
+          <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg>
+          <span>
+            Google Maps did not accept this app&apos;s address (<strong>{window.location.origin}</strong>), so the map cannot show.
+            In Google Cloud, open APIs &amp; Services → Credentials → your Maps key → Website restrictions and add
+            {' '}<strong>{window.location.origin}/*</strong>, then wait a few minutes. Until then, use the arrow button on a trip to open it in Google Maps.
+          </span>
         </div>
       )}
 

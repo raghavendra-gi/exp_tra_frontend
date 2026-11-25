@@ -69,6 +69,7 @@ if (typeof window !== 'undefined') {
   window.gm_authFailure = () => {
     authFailed = true;
     console.error('[maps] Google rejected the API key (gm_authFailure). Check key restrictions, enabled APIs and billing.');
+    window.dispatchEvent(new Event('maps-auth-failed'));     // lets a page explain it on screen
   };
 }
 export function mapsAuthFailed() {
