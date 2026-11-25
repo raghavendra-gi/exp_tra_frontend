@@ -18,6 +18,8 @@ import Modal from './Modal';
  *    to Accounts (the trip form calls askTrackingConsent). It is never asked at sign-in.
  *  • The answer is saved on the server (POST /tracking/consent): Accounts only see trips that were allowed.
  *  • A trip is tracked on this device when the server says "allowed" AND this device is the one that said yes.
+ *    The Android app counts as having said yes for any trip the person already allowed (e.g. on a computer), because
+ *    the phone is the device that actually travels. A browser has to be switched on with "Turn on".
  *  • While a trip is tracked a status line shows whether it works. For a trip that is not tracked the line offers
  *    "Turn on", so someone who closed the question or said no can still change their mind.
  *
@@ -99,20 +101,21 @@ export default function TripTracker() {
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
   }, [eligible, refresh]);
 
-  /* Tracked on THIS device = allowed on the server + this device said yes. */
+  /* Tracked on THIS device = allowed on the server + this device said yes (the Android app counts as yes, see above). */
   const legacy = eligible && hadLegacyConsent(username);
+  const inApp = isNativeApp();
   const { trackedIds, offTrips } = useMemo(() => {
     const on = [];
     const off = [];
     for (const t of trips) {
       const mine = getDeviceChoice(username, t.id);
-      const here = t.tracking === true && (mine === 'granted' || (legacy && mine === null));
+      const here = t.tracking === true && (mine === 'granted' || (mine === null && (legacy || inApp)));
       (here ? on : off).push(t);
     }
     return { trackedIds: on.map((t) => t.id), offTrips: off };
     // `answered` is not read inside, but it changes after this device records an answer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trips, username, legacy, answered]);
+  }, [trips, username, legacy, inApp, answered]);
 
   const trackedKey = trackedIds.join(',');
   useEffect(() => {

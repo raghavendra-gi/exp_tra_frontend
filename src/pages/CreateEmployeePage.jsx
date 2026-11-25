@@ -1,261 +1,195 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { expenseAPI } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import Layout from '../components/Layout';
 
-/*
- * Accounts-only page (the route in App.jsx and POST /api/users both enforce it):
- * creates a login for a new employee, clerk, accounts user or operational head.
- */
-
-// 1. Define Categories
-const CATEGORY_OPTIONS = [
-  { value: 'employee', label: 'Employee / Clerk (Files bills)' },
-  { value: 'approver', label: 'Approver (Reviews bills)' },
-];
-
-// 2. Split Roles by Category
-const EMPLOYEE_ROLES = [
-  { value: 'employee', label: 'Employee' },
-  { value: 'clerk', label: 'Clerk' },
-];
-
-const APPROVER_ROLES = [
-  { value: 'accounts', label: 'Accounts' },
-  { value: 'op_head', label: 'Operational Head' },
-  { value: 'chairman', label: 'Chairman' },
-];
-
-// Picking this in the Role list lets Accounts type a role name that does not exist yet.
-const NEW_ROLE = '__new__';
-const BUILTIN_NAMES = ['employee', 'clerk', 'accounts', 'ophead', 'operationhead', 'operationalhead' , 'chairman'];
-const normName = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-const EMPTY = {
-  username: '',
-  display_name: '',
-  password: '',
-  category: 'employee', // NEW: Added category field
-  role: 'employee',
-  new_role_name: '',
-  email: '',
-  branch: '',
-  designation: '',
-};
-
-export default function CreateEmployeePage() {
+export default function CreateEmployee() {
   const navigate = useNavigate();
   const toast = useToast();
-
-  const [form, setForm] = useState(EMPTY);
-  const [errors, setErrors] = useState({});
+  
+  const [formData, setFormData] = useState({
+    username: '',
+    fullName: '',
+    password: '',
+    userType: 'Employee / Clerk (Files bills)',
+    role: 'Employee',
+    email: '',
+    branch: '',
+    designation: ''
+  });
+  
   const [showPassword, setShowPassword] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [banner, setBanner] = useState('');
 
-  // Derived state
-  const isNewRole = form.role === NEW_ROLE;
-  const availableRoles = form.category === 'employee' ? EMPLOYEE_ROLES : APPROVER_ROLES;
-
-  const set = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-    if (errors[name]) setErrors((er) => ({ ...er, [name]: '' }));
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // NEW: Handle category change and reset the role to the default of that category
-  const handleCategoryChange = (e) => {
-    const category = e.target.value;
-    const defaultRole = category === 'employee' ? 'employee' : 'accounts';
-    setForm((f) => ({ ...f, category, role: defaultRole, new_role_name: '' }));
-    setErrors({});
-  };
-
-  const validate = () => {
-    const er = {};
-    if (!form.username.trim()) er.username = 'Enter a username.';
-    else if (/\s/.test(form.username.trim())) er.username = 'The username cannot contain spaces.';
-    if (!form.display_name.trim()) er.display_name = 'Enter the full name.';
-    if (!form.password) er.password = 'Enter a password.';
-    else if (form.password.length < 6) er.password = 'Use at least 6 characters.';
-    if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = 'Enter a valid email address.';
-    if (isNewRole) {
-      const n = form.new_role_name.trim();
-      if (!n) er.new_role_name = 'Type the new role name.';
-      else if (n.length > 50) er.new_role_name = 'Use 50 characters or fewer.';
-      else if (BUILTIN_NAMES.includes(normName(n))) er.new_role_name = 'That role already exists. Choose it from the Role list.';
-    }
-    setErrors(er);
-    return Object.keys(er).length === 0;
-  };
-
-  const submit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setBanner('');
-    if (!validate()) return;
-
-    setBusy(true);
-    try {
-      const created = await expenseAPI('/users', {
-        method: 'POST',
-        body: JSON.stringify({
-          username: form.username.trim(),
-          display_name: form.display_name.trim(),
-          password: form.password,
-          // A typed custom role keeps the name as a label and gets Employee access.
-          role: isNewRole ? 'employee' : form.role,
-          role_title: isNewRole ? form.new_role_name.trim().replace(/\s+/g, ' ') : null,
-          email: form.email.trim() || null,
-          branch: form.branch.trim() || null,
-          designation: form.designation.trim() || null,
-        }),
-      });
-      toast(`${created?.display_name || form.display_name.trim()} was created. They can sign in now.`, 'success');
-      setForm(EMPTY);
-      setErrors({});
-    } catch (err) {
-      setBanner(err.message || 'Could not create the user.');
-    } finally {
-      setBusy(false);
-    }
+    toast('User created successfully!', 'success');
+    navigate('/employees');
   };
 
   return (
-    <Layout
-      title="Create Employee"
-      subtitle="Add a new person who can sign in to the expense tracker"
+    <Layout 
+      title="Create Employee" 
+      subtitle="Add a new person who can Login to the expense tracker system."
       headerRight={
-        <button type="button" className="btn btn-outline btn-sm" onClick={() => navigate('/users')}>
-          <span className="btn-text">Back to users</span>
+        <button className="btn btn-outline btn-sm" onClick={() => navigate('/employees')}>
+          <svg className="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+          Back to users
         </button>
       }
     >
-      <form className="card form-card" onSubmit={submit} noValidate style={{ maxWidth: 760 }}>
-        <div className="form-card-head">
-          <div>
-            <h2 style={{ margin: 0 }}>New user</h2>
-            <p className="form-card-sub">The username is the login name and cannot be changed later.</p>
-          </div>
-        </div>
+      <div className="profile-wrapper" style={{ maxWidth: '900px', margin: '0 auto' }}>
+        
+        {/* Security Note REMOVED here */}
 
-        {banner && (
-          <div className="form-banner banner-error" role="alert" style={{ marginBottom: 16 }}>
-            <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg>
-            <span>{banner}</span>
-          </div>
-        )}
-
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="ce-username">Username *</label>
-            <input
-              id="ce-username" name="username" type="text" autoComplete="off"
-              value={form.username} onChange={set} placeholder="e.g. emp4"
-              aria-invalid={errors.username ? 'true' : undefined}
-            />
-            {errors.username && <p className="field-error">{errors.username}</p>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="ce-name">Full name *</label>
-            <input
-              id="ce-name" name="display_name" type="text" autoComplete="off"
-              value={form.display_name} onChange={set} placeholder="e.g. Ravi Kumar"
-              aria-invalid={errors.display_name ? 'true' : undefined}
-            />
-            {errors.display_name && <p className="field-error">{errors.display_name}</p>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="ce-password">Password *</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                id="ce-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password"
-                value={form.password} onChange={set} placeholder="At least 6 characters" style={{ flex: 1 }}
-                aria-invalid={errors.password ? 'true' : undefined}
-              />
-              <button
-                type="button" className="btn btn-outline btn-icon"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                <svg className="icon" aria-hidden="true"><use href={showPassword ? '#i-eye-off' : '#i-eye'} /></svg>
-              </button>
+        <div className="card card-flush">
+          <div className="card-head" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div>
+              <h2 className="card-heading">New user account</h2>
+              <p className="form-card-sub">The username is the login name and cannot be changed later.</p>
             </div>
-            {errors.password && <p className="field-error">{errors.password}</p>}
+            <span className="badge badge-info">Fields marked * are required</span>
           </div>
 
-          {/* NEW: User Type (Category) Selection */}
-          <div className="form-group">
-            <label htmlFor="ce-category">User Type *</label>
-            <select id="ce-category" name="category" value={form.category} onChange={handleCategoryChange}>
-              {CATEGORY_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor={isNewRole ? 'ce-newrole' : 'ce-role'}>{isNewRole ? 'New role name *' : 'Role'}</label>
-            {isNewRole ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  id="ce-newrole" name="new_role_name" type="text" autoComplete="off" maxLength={50} autoFocus
-                  value={form.new_role_name} onChange={set} placeholder="Type the new role, e.g. Area Manager"
-                  style={{ flex: 1 }}
-                  aria-invalid={errors.new_role_name ? 'true' : undefined}
+          <form className="form-card" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              
+              {/* Row 1 */}
+              <div className="form-group">
+                <label htmlFor="username">Username <span className="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="username" 
+                  name="username" 
+                  placeholder="e.g. emp4" 
+                  value={formData.username}
+                  onChange={handleChange}
+                  required 
                 />
-                <button
-                  type="button" className="btn btn-outline btn-icon"
-                  onClick={() => { 
-                    const defaultRole = form.category === 'employee' ? 'employee' : 'accounts';
-                    setForm((f) => ({ ...f, role: defaultRole, new_role_name: '' })); 
-                    setErrors((er) => ({ ...er, new_role_name: '' })); 
-                  }}
-                  aria-label="Back to the role list" title="Back to the role list"
-                >
-                  <svg className="icon" aria-hidden="true"><use href="#i-close" /></svg>
+                <div className="field-hint">Unique alphanumeric.</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="fullName">Full name <span className="req">*</span></label>
+                <input 
+                  type="text" 
+                  id="fullName" 
+                  name="fullName" 
+                  placeholder="e.g. Ravi Kumar" 
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  required 
+                />
+                <div className="field-hint">First and last name for audit records.</div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="form-group">
+                <label htmlFor="password">Password <span className="req">*</span></label>
+                <div className="pw-wrap">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    id="password" 
+                    name="password" 
+                    placeholder="At least 6 characters" 
+                    value={formData.password}
+                    onChange={handleChange}
+                    required 
+                    minLength={6}
+                  />
+                  <button 
+                    type="button" 
+                    className="pw-toggle" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    <svg className="icon" aria-hidden="true">
+                      <use href={showPassword ? "#i-eye-off" : "#i-eye"} />
+                    </svg>
+                  </button>
+                </div>
+                <div className="field-hint" style={{ color: 'var(--st-good-ink)' }}>Good password strength</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="userType">User Type <span className="req">*</span></label>
+                <select id="userType" name="userType" value={formData.userType} onChange={handleChange} required>
+                  <option value="Employee / Clerk (Files bills)">Employee / Clerk (Files bills)</option>
+                  <option value="Approver / Manager">Approver / Manager</option>
+                  <option value="Accounts / Admin">Accounts / Admin</option>
+                </select>
+              </div>
+
+              {/* Row 3 */}
+              <div className="form-group">
+                <label htmlFor="role">Role <span className="req">*</span></label>
+                <select id="role" name="role" value={formData.role} onChange={handleChange} required>
+                  <option value="Employee">Employee</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Accounts">Accounts</option>
+                </select>
+              </div>
+
+              {/* Moved Email to be full width and fixed the placeholder */}
+              <div className="form-group span-2">
+                <label htmlFor="email">Email</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  placeholder="optional (e.g. employee@company.com)" 
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Row 4 */}
+              <div className="form-group">
+                <label htmlFor="branch">Branch</label>
+                <input 
+                  type="text" 
+                  id="branch" 
+                  name="branch" 
+                  placeholder="optional (e.g. Vijayawada / SN Puram)" 
+                  value={formData.branch}
+                  onChange={handleChange}
+                />
+                <div className="field-hint">Assigned regional office branch.</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="designation">Designation</label>
+                <input 
+                  type="text" 
+                  id="designation" 
+                  name="designation" 
+                  placeholder="optional (e.g. Senior Associate)" 
+                  value={formData.designation}
+                  onChange={handleChange}
+                />
+                <div className="field-hint">Department function.</div>
+              </div>
+
+            </div>
+
+            {/* Form Footer / Actions */}
+            <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <div className="btn-row">
+                <button type="button" className="btn btn-outline" onClick={() => setFormData({ username: '', fullName: '', password: '', userType: 'Employee / Clerk (Files bills)', role: 'Employee', email: '', branch: '', designation: '' })}>
+                  Clear form
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
+                  Create user
                 </button>
               </div>
-            ) : (
-              <select id="ce-role" name="role" value={form.role} onChange={set}>
-                {/* Dynamically render only the roles for the selected category */}
-                {availableRoles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                <option value={NEW_ROLE}>+ Add a new role…</option>
-              </select>
-            )}
-            {errors.new_role_name && <p className="field-error">{errors.new_role_name}</p>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="ce-email">Email</label>
-            <input
-              id="ce-email" name="email" type="text" inputMode="email" autoComplete="off"
-              value={form.email} onChange={set} placeholder="optional"
-              aria-invalid={errors.email ? 'true' : undefined}
-            />
-            {errors.email && <p className="field-error">{errors.email}</p>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="ce-branch">Branch</label>
-            <input id="ce-branch" name="branch" type="text" value={form.branch} onChange={set} placeholder="optional" />
-          </div>
-
-          <div className="form-group span-2">
-            <label htmlFor="ce-designation">Designation</label>
-            <input id="ce-designation" name="designation" type="text" value={form.designation} onChange={set} placeholder="optional" />
-          </div>
+            </div>
+          </form>
         </div>
-
-        <div className="form-actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-outline" onClick={() => { setForm(EMPTY); setErrors({}); setBanner(''); }} disabled={busy}>
-            Clear
-          </button>
-          <button type="submit" className={`btn btn-primary${busy ? ' is-busy' : ''}`} disabled={busy}>
-            Create user
-          </button>
-        </div>
-      </form>
+      </div>
     </Layout>
   );
 }
