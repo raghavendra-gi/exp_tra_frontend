@@ -6,9 +6,11 @@ import Layout from '../components/Layout';
 import ExpenseTable, { EmptyState } from '../components/ExpenseTable';
 import { useExpenses } from '../hooks/useExpenses';
 import { useExpenseActions } from '../hooks/useExpenseActions';
+import { EXPENSE_TYPES } from '../constants/expenseTypes';
 import { formatMoney, isApproverRole } from '../utils/format';
 
 const PAGE_SIZE = 10;
+const TYPE_OPTIONS = Object.keys(EXPENSE_TYPES);
 
 const TABS = [
   { key: 'all', label: 'All', status: '' },
@@ -47,6 +49,9 @@ export default function ExpensesPage() {
   const [activeTab, setActiveTab] = useState(() => (TABS.some((t) => t.key === location.state?.tab) ? location.state.tab : 'all'));
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  // Approvers can narrow the list by category and by employee (same two filters as the dashboard).
+  const [typeFilter, setTypeFilter] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('');
 
   // A sidebar shortcut (Awaiting review, Needs fixing…) while already on this page.
   const navTab = location.state?.tab;
@@ -57,23 +62,34 @@ export default function ExpensesPage() {
     if (next !== activeTab) { setActiveTab(next); setPage(1); setSelectedIds(new Set()); }
   }
 
+  const employeeOptions = useMemo(
+    () => [...new Set(expenses.map((e) => e.employee_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [expenses],
+  );
+
+  // The category / employee filters apply first, so the tab counts and the total follow them.
+  const scoped = useMemo(() => {
+    if (!isApprover || (!typeFilter && !employeeFilter)) return expenses;
+    return expenses.filter((e) => (!typeFilter || e.type === typeFilter) && (!employeeFilter || e.employee_name === employeeFilter));
+  }, [expenses, isApprover, typeFilter, employeeFilter]);
+
   // One pass for every tab count, instead of one filter() per tab per render.
   const counts = useMemo(() => {
-    const c = { all: expenses.length, pending: 0, query: 0, approved: 0, rejected: 0, inprogress: 0 };
-    for (const e of expenses) {
+    const c = { all: scoped.length, pending: 0, query: 0, approved: 0, rejected: 0, inprogress: 0 };
+    for (const e of scoped) {
       const k = STATUS_TO_TAB[e.status];
       if (k) c[k] += 1;
     }
     return c;
-  }, [expenses]);
+  }, [scoped]);
 
   const statusForTab = TABS.find((t) => t.key === activeTab)?.status || '';
 
   const { filtered, totalAmount } = useMemo(() => {
-    const list = statusForTab ? expenses.filter((e) => e.status === statusForTab) : expenses;
+    const list = statusForTab ? scoped.filter((e) => e.status === statusForTab) : scoped;
     const sum = list.reduce((s, e) => s + (Number(e.data?.amount) || 0), 0);
     return { filtered: list, totalAmount: sum };
-  }, [expenses, statusForTab]);
+  }, [scoped, statusForTab]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageSafe = Math.min(page, totalPages);
@@ -101,6 +117,34 @@ export default function ExpensesPage() {
   };
 
   const changeTab = (key) => { setActiveTab(key); setPage(1); clearSelection(); };
+  const changeType = (v) => { setTypeFilter(v); setPage(1); clearSelection(); };
+  const changeEmployee = (v) => { setEmployeeFilter(v); setPage(1); clearSelection(); };
+  const filtersOn = !!(typeFilter || employeeFilter);
+  const clearFilters = () => { setTypeFilter(''); setEmployeeFilter(''); setPage(1); clearSelection(); };
+
+  const filterControls = (
+    <div className="dash-filters exp-filters" role="group" aria-label="Filters">
+      <label className="filter">
+        <span className="sr-only">Category</span>
+        <select value={typeFilter} onChange={(e) => changeType(e.target.value)} className={typeFilter ? 'is-set' : ''}>
+          <option value="">All categories</option>
+          {TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </label>
+      <label className="filter">
+        <span className="sr-only">Employee</span>
+        <select value={employeeFilter} onChange={(e) => changeEmployee(e.target.value)} className={employeeFilter ? 'is-set' : ''}>
+          <option value="">All employees</option>
+          {employeeOptions.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </label>
+      {filtersOn && (
+        <button type="button" className="btn btn-ghost btn-sm" onClick={clearFilters}>
+          <svg className="icon" aria-hidden="true"><use href="#i-x" /></svg> Clear
+        </button>
+      )}
+    </div>
+  );
 
   const bulkDecide = (status) => {
     const byId = new Map(expenses.map((e) => [e.id, e]));
@@ -120,7 +164,9 @@ export default function ExpensesPage() {
       <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg>
       <span className="btn-text">New expense</span>
     </button>
-  ) : null;
+  ) : (
+    <div className="exp-filters-head">{filterControls}</div>   // desktop: in the page header; phones get the bar below
+  );
 
   const activeLabel = TABS.find((t) => t.key === activeTab)?.label.toLowerCase();
 
@@ -129,6 +175,8 @@ export default function ExpensesPage() {
       title={isApprover ? 'All expenses' : 'My expenses'}
       headerRight={headerRight}
     >
+      {isApprover && <div className="exp-filters-bar">{filterControls}</div>}
+
       <div className="card card-flush">
         <div className="tabs" role="tablist" aria-label="Expense status">
           {TABS.map((t) => (
@@ -196,8 +244,8 @@ export default function ExpensesPage() {
           empty={
             <EmptyState
               icon={activeTab === 'all' ? 'i-inbox' : 'i-filter'}
-              title={activeTab === 'all' ? 'No expenses yet' : `No ${activeLabel} expenses`}
-              text={activeTab === 'all' ? (isApprover ? 'Requests from employees will appear here.' : 'Submit a bill or start a trip, and it will show up here.') : 'Try another tab.'}
+              title={filtersOn ? 'Nothing matches these filters' : activeTab === 'all' ? 'No expenses yet' : `No ${activeLabel} expenses`}
+              text={filtersOn ? 'Try a different category or employee.' : activeTab === 'all' ? (isApprover ? 'Requests from employees will appear here.' : 'Submit a bill or start a trip, and it will show up here.') : 'Try another tab.'}
               action={activeTab === 'all' && !isApprover && (
                 <button className="btn btn-primary btn-sm" onClick={() => navigate('/new')}>
                   <svg className="icon" aria-hidden="true"><use href="#i-plus" /></svg> New expense

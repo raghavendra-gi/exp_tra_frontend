@@ -675,11 +675,15 @@ strong { font-weight:600; }
 /* Item checkboxes as selectable tiles */
 .items-grid { 
   display: grid; 
-  grid-template-columns: repeat(2, 1fr); /* Forces exactly 2 columns */
+  grid-template-columns: repeat(2, 1fr); /* phones: 2 per line */
   gap: var(--sp-2); 
 }
+/* tablets and laptops: 4 per line (Tiffin, Lunch, Dinner, Other) */
+@media (min-width:641px) {
+  .items-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 .item-label {
-  display:flex; align-items:center; gap:var(--sp-2);
+  display:flex; align-items:center; gap:var(--sp-2); min-width:0;
   min-height:40px; padding:0 var(--sp-3);
   border:1px solid var(--border-strong); border-radius:var(--r-sm); background:var(--field);
   font-size:var(--t-base); cursor:pointer; user-select:none;
@@ -2809,9 +2813,11 @@ body:not(.modal-open) .track-pill { display:none !important; }
 }
 
 /* Ensure the form footer matches the design */
+/* Back sits right beside Submit, both on the right */
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: var(--sp-2);
   align-items: center;
   background: var(--surface-2);
   margin: var(--sp-6) calc(-1 * var(--sp-6)) calc(-1 * var(--sp-6));
@@ -2826,8 +2832,8 @@ body:not(.modal-open) .track-pill { display:none !important; }
   }
   
   .form-actions {
-    flex-direction: column;
-    gap: var(--sp-4);
+    flex-direction: row;
+    gap: var(--sp-2);
     margin: var(--sp-4) calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
     padding: var(--sp-4);
   }
@@ -2839,4 +2845,23 @@ body:not(.modal-open) .track-pill { display:none !important; }
   .form-actions .btn {
     flex: 1;
   }
+}
+/* Live tracking: one-user view */
+.live-toolbar { margin-bottom:var(--sp-2); }
+.live-picker { margin:0; max-width:420px; }
+.live-detail { margin-top:var(--sp-3); padding:var(--sp-3) var(--sp-4); border:1px solid var(--border); border-radius:var(--r-md); background:var(--surface); }
+.live-detail-head { display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-3); }
+.live-detail-head .live-badge { margin-left:auto; }
+.live-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:var(--sp-3); margin:0; }
+.live-stats dt { font-size:var(--t-xs); color:var(--ink-3); }
+.live-stats dd { margin:2px 0 0; font-weight:600; color:var(--ink); overflow-wrap:anywhere; }
+
+/* All expenses (approvers): category + employee filters. Header on desktop, a bar above the list on phones. */
+.exp-filters-bar { display:none; }
+@media (max-width:640px) {
+  .exp-filters-head { display:none; }
+  .exp-filters-bar { display:block; margin-bottom:var(--sp-3); }
+  .exp-filters-bar .exp-filters { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); }
+  .exp-filters-bar .filter select { width:100%; max-width:none; height:34px; font-size:12px; }
+  .exp-filters-bar .exp-filters > .btn { grid-column:1 / -1; justify-self:start; }
 }
