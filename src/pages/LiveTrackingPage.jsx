@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { EmptyState } from '../components/ExpenseTable';
 import { expenseAPI } from '../api/client';
@@ -8,8 +9,11 @@ import { formatDateTime } from '../utils/format';
 
 /*
  * Live tracking (Accounts and Operation Head only — the Chairman has no access to location data).
- * Shows every trip that is In Progress, where the employee's phone last reported, and — for the trip you
- * pick — the route travelled so far. The page asks the server again every 15 seconds while it is open.
+ * Shows every trip that is In Progress and where the employee's phone last reported.
+ * Pick one user (from the list, the drop-down or a pin) and the map shows ONLY that person: their current
+ * position, an accuracy circle and the route travelled so far. "Show all trips" brings everybody back.
+ * The picked trip is kept in the address (#/live?trip=54), so a refresh or a shared link opens the same user.
+ * The page asks the server again every 15 seconds while it is open.
  *
  * A phone sends a new point after it has moved about 25 m, so a parked phone shows an older "last update"
  * even though tracking is working.
@@ -42,7 +46,12 @@ export default function LiveTrackingPage() {
   const [fetchedAt, setFetchedAt] = useState(Date.now());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedId, setSelectedId] = useState(null);
+  const [params, setParams] = useSearchParams();
+  const selectedId = Number(params.get('trip')) || null;        // the picked trip lives in the address
+  const setSelectedId = useCallback(
+    (id) => setParams(id ? { trip: String(id) } : {}, { replace: true }),
+    [setParams],
+  );
   const [path, setPath] = useState(null);                       // route of the selected trip
   const [mapState, setMapState] = useState('loading');          // loading | ready | unavailable
   const [keyRejected, setKeyRejected] = useState(() => mapsAuthFailed());   // Google refused the key for this app's address
@@ -52,7 +61,9 @@ export default function LiveTrackingPage() {
   const mapRef = useRef(null);                                  // { map, libs }
   const markersRef = useRef(new Map());                         // trip id -> Marker
   const lineRef = useRef([]);                                   // route overlays
+  const circleRef = useRef(null);                               // accuracy circle of the picked trip
   const fittedRef = useRef(false);
+  const routeFitRef = useRef(null);                             // trip id whose route the map was already fitted to
 
   /* ───────── data ───────── */
   const load = useCallback(async () => {
@@ -130,7 +141,7 @@ export default function LiveTrackingPage() {
           center: { lat: 20.5937, lng: 78.9629 }, zoom: 5,
           mapTypeControl: false, streetViewControl: false, clickableIcons: false, gestureHandling: 'greedy',
         });
-        mapRef.current = { map, Marker: markerLib.Marker || maps.Marker, Polyline: mapsLib.Polyline, Bounds: core.LatLngBounds };
+        mapRef.current = { map, Marker: markerLib.Marker || maps.Marker, Polyline: mapsLib.Polyline, Circle: mapsLib.Circle, Bounds: core.LatLngBounds };
         setMapState('ready');
       } catch (err) {
         console.warn('[live] map unavailable:', err?.message || err);
@@ -144,6 +155,8 @@ export default function LiveTrackingPage() {
       markers.clear();
       lineRef.current.forEach((o) => o.setMap(null));
       lineRef.current = [];
+      circleRef.current?.setMap(null);
+      circleRef.current = null;
       mapRef.current = null;
     };
   }, []);
@@ -163,7 +176,7 @@ export default function LiveTrackingPage() {
     m.map.fitBounds(b, 60);
   }, [trips]);
 
-  // One marker per trip that has reported a location.
+  // One marker per trip that has reported a location. When a user is picked, only that user's pin is drawn.
   useEffect(() => {
     const m = mapRef.current;
     if (mapState !== 'ready' || !m) return;
@@ -171,6 +184,7 @@ export default function LiveTrackingPage() {
     const live = new Set();
     for (const t of trips) {
       if (!t.last) continue;
+      if (selectedId && t.expense_id !== selectedId) continue;
       live.add(t.expense_id);
       const pos = { lat: t.last.lat, lng: t.last.lng };
       const active = t.expense_id === selectedId;
@@ -184,7 +198,6 @@ export default function LiveTrackingPage() {
       }
       marker.setLabel({ text: initials(t.employee_name), color: '#ffffff', fontWeight: '700', fontSize: '12px' });
       marker.setZIndex(active ? 1000 : 1);
-      marker.setOpacity(active || !selectedId ? 1 : 0.65);
     }
     for (const [id, marker] of markers) {
       if (!live.has(id)) { marker.setMap(null); markers.delete(id); }
@@ -192,25 +205,61 @@ export default function LiveTrackingPage() {
     if (!fittedRef.current && live.size) { fittedRef.current = true; fitAll(); }
   }, [trips, selectedId, mapState, fitAll]);
 
+  // Accuracy circle around the picked user's current position.
+  useEffect(() => {
+    const m = mapRef.current;
+    if (mapState !== 'ready' || !m) return;
+    circleRef.current?.setMap(null);
+    circleRef.current = null;
+    const last = selected?.last;
+    if (!last || !Number.isFinite(last.accuracy) || last.accuracy <= 0) return;
+    circleRef.current = new m.Circle({
+      map: m.map, center: { lat: last.lat, lng: last.lng }, radius: last.accuracy,
+      strokeColor: '#2563eb', strokeOpacity: 0.5, strokeWeight: 1, fillColor: '#2563eb', fillOpacity: 0.12, clickable: false,
+    });
+  }, [selected, mapState]);
+
+  // A user was picked: go to their pin straight away (the route fits the view once it arrives).
+  useEffect(() => {
+    const m = mapRef.current;
+    if (mapState !== 'ready' || !m || !selectedId) return;
+    const last = trips.find((t) => t.expense_id === selectedId)?.last;
+    if (last && routeFitRef.current !== selectedId) {
+      m.map.setCenter({ lat: last.lat, lng: last.lng });
+      m.map.setZoom(16);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, mapState, loading]);
+
+  const showAll = useCallback(() => {
+    routeFitRef.current = null;
+    setSelectedId(null);
+    fitAll();
+  }, [setSelectedId, fitAll]);
+
   // The route of the picked trip as a line.
   useEffect(() => {
     const m = mapRef.current;
     if (mapState !== 'ready' || !m) return;
     lineRef.current.forEach((o) => o.setMap(null));
     lineRef.current = [];
-    if (!selectedId || !path || path.expense_id !== selectedId || !path.points.length) return;
+    if (!selectedId) { routeFitRef.current = null; return; }
+    if (!path || path.expense_id !== selectedId || !path.points.length) return;
 
     const pts = path.points.map((p) => ({ lat: p.lat, lng: p.lng }));
     const line = new m.Polyline({ path: pts, map: m.map, strokeColor: '#2563eb', strokeOpacity: 0.9, strokeWeight: 5 });
-    const start = new m.Marker({ position: pts[0], map: m.map, label: 'S', title: 'Where tracking began' });
-    lineRef.current = [line, start];
-    if (pts.length > 1) {
-      const b = new m.Bounds();
-      pts.forEach((p) => b.extend(p));
-      m.map.fitBounds(b, 60);
-    } else {
-      m.map.setCenter(pts[0]);
-      m.map.setZoom(16);
+    const start = pts.length > 1 ? new m.Marker({ position: pts[0], map: m.map, label: 'S', title: 'Where tracking began' }) : null;
+    lineRef.current = start ? [line, start] : [line];
+    if (routeFitRef.current !== selectedId) {        // fit once per user, so the 15 s refresh never fights the person's panning
+      routeFitRef.current = selectedId;
+      if (pts.length > 1) {
+        const b = new m.Bounds();
+        pts.forEach((p) => b.extend(p));
+        m.map.fitBounds(b, 60);
+      } else {
+        m.map.setCenter(pts[0]);
+        m.map.setZoom(16);
+      }
     }
   }, [path, selectedId, mapState]);
 
@@ -267,20 +316,60 @@ export default function LiveTrackingPage() {
 
       <div className="live-grid" hidden={empty}>
           <div className="live-map-col">
+            <div className="live-toolbar">
+              <div className="form-group live-picker">
+                <label htmlFor="live-user">Show on map</label>
+                <select id="live-user" value={selectedId ?? ''} onChange={(e) => (e.target.value ? setSelectedId(Number(e.target.value)) : showAll())}>
+                  <option value="">All trips ({trips.length})</option>
+                  {trips.map((t) => (
+                    <option key={t.expense_id} value={t.expense_id}>
+                      {t.employee_name} · #{t.expense_id}{t.last ? '' : ' (no location yet)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="live-map" ref={mapDivRef} hidden={mapState === 'unavailable'} />
             {mapState === 'unavailable' && (
               <p className="live-note">The map could not load. Use “Open in Google Maps” on a trip to see where it is.</p>
             )}
             <div className="live-map-actions">
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => { setSelectedId(null); fitAll(); }}>
+              <button type="button" className="btn btn-outline btn-sm" onClick={showAll}>
                 Show all trips
               </button>
-              {selected && path && path.expense_id === selected.expense_id && (
-                <span className="live-note" style={{ margin: 0 }}>
-                  Route so far: <strong>{path.distance_km.toFixed(1)} km</strong> (approx.) from {path.count} {path.count === 1 ? 'point' : 'points'}
-                </span>
+              {selected && (
+                <span className="live-note" style={{ margin: 0 }}>Showing only <strong>{selected.employee_name}</strong>.</span>
               )}
             </div>
+
+            {selected && (() => {
+              const f = freshness(selected, extra);
+              const hasPath = path && path.expense_id === selected.expense_id;
+              const last = selected.last;
+              return (
+                <section className="live-detail" aria-label={`Details for ${selected.employee_name}`}>
+                  <div className="live-detail-head">
+                    <span className="avatar avatar-sm" aria-hidden="true">{initials(selected.employee_name)}</span>
+                    <div>
+                      <div className="live-item-name">{selected.employee_name}</div>
+                      <div className="live-item-sub">#{selected.expense_id} · {selected.type}{selected.from ? ` · from ${selected.from}` : ''}</div>
+                    </div>
+                    <span className={`live-badge is-${f.tone}`}><span className="live-dot" aria-hidden="true" />{last ? `Last update ${f.label}` : f.label}</span>
+                  </div>
+                  <dl className="live-stats">
+                    <div><dt>Started</dt><dd>{formatDateTime(selected.started_at)}</dd></div>
+                    <div><dt>Distance so far</dt><dd>{hasPath ? `${path.distance_km.toFixed(1)} km (approx.)` : '…'}</dd></div>
+                    <div><dt>Points</dt><dd>{hasPath ? path.count : selected.points}</dd></div>
+                    <div><dt>Speed</dt><dd>{last && last.speed != null ? `${Math.round(last.speed * 3.6)} km/h` : '—'}</dd></div>
+                    <div><dt>Accuracy</dt><dd>{(last && formatAccuracy(last.accuracy)) || '—'}</dd></div>
+                    <div>
+                      <dt>Position</dt>
+                      <dd>{last ? <a href={mapUrl(last.lat, last.lng)} target="_blank" rel="noopener noreferrer">Open in Google Maps</a> : 'Waiting for first location'}</dd>
+                    </div>
+                  </dl>
+                </section>
+              );
+            })()}
           </div>
 
           <ul className="live-list" aria-label="Trips in progress">

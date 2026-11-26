@@ -174,7 +174,10 @@ export default function TripTracker() {
       text = snap.message || 'Waiting for a GPS signal…';
     } else if (snap.mode === 'foreground') {
       tone = 'warn';
-      text = snap.message || 'Tracking works only while the app stays open.';
+      const onPhone = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+      text = !isNativeApp() && onPhone
+        ? 'Tracking stops when you lock the screen or switch apps. Install and open the Expense Tracker app to keep tracking in the background.'
+        : (snap.message || 'Tracking works only while the app stays open.');
     } else {
       text = snap.lastFixAt ? `Live tracking on · last location ${ago(snap.lastFixAt)}` : 'Live tracking on · finding your location…';
       if (snap.pending > 0) text += ` · ${snap.pending} waiting to send`;
@@ -209,8 +212,11 @@ export default function TripTracker() {
           <li>Tracking starts when you tap <strong>Allow tracking</strong> and stops by itself when you end the trip.</li>
           <li>Only Accounts and the Operation Head can see it.</li>
           <li>
-            On Android it keeps working with the screen off. A notification stays on while it runs. When the phone asks for location
-            permission, choose <strong>Allow all the time</strong> if it is offered.
+            In the <strong>Android app</strong> it keeps working with the screen off (a notification stays on while it runs). In a web
+            browser it only works while the page is open. When the phone asks for location permission, choose <strong>Allow all the time</strong>.
+          </li>
+          <li>
+            If tracking stops after a while, open the app&apos;s phone settings and set Battery to <strong>Unrestricted</strong> (or &quot;Don&apos;t optimise&quot;).
           </li>
           <li>If you say no, your trip is still submitted. You can turn tracking on later while the trip is in progress.</li>
         </ul>
