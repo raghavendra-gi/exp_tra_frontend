@@ -675,15 +675,11 @@ strong { font-weight:600; }
 /* Item checkboxes as selectable tiles */
 .items-grid { 
   display: grid; 
-  grid-template-columns: repeat(2, 1fr); /* phones: 2 per line */
+  grid-template-columns: repeat(2, 1fr); /* Forces exactly 2 columns */
   gap: var(--sp-2); 
 }
-/* tablets and laptops: 4 per line (Tiffin, Lunch, Dinner, Other) */
-@media (min-width:641px) {
-  .items-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
 .item-label {
-  display:flex; align-items:center; gap:var(--sp-2); min-width:0;
+  display:flex; align-items:center; gap:var(--sp-2);
   min-height:40px; padding:0 var(--sp-3);
   border:1px solid var(--border-strong); border-radius:var(--r-sm); background:var(--field);
   font-size:var(--t-base); cursor:pointer; user-select:none;
@@ -2813,11 +2809,9 @@ body:not(.modal-open) .track-pill { display:none !important; }
 }
 
 /* Ensure the form footer matches the design */
-/* Back sits right beside Submit, both on the right */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--sp-2);
+  justify-content: space-between;
   align-items: center;
   background: var(--surface-2);
   margin: var(--sp-6) calc(-1 * var(--sp-6)) calc(-1 * var(--sp-6));
@@ -2832,8 +2826,8 @@ body:not(.modal-open) .track-pill { display:none !important; }
   }
   
   .form-actions {
-    flex-direction: row;
-    gap: var(--sp-2);
+    flex-direction: column;
+    gap: var(--sp-4);
     margin: var(--sp-4) calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
     padding: var(--sp-4);
   }
@@ -2846,22 +2840,56 @@ body:not(.modal-open) .track-pill { display:none !important; }
     flex: 1;
   }
 }
-/* Live tracking: one-user view */
-.live-toolbar { margin-bottom:var(--sp-2); }
-.live-picker { margin:0; max-width:420px; }
-.live-detail { margin-top:var(--sp-3); padding:var(--sp-3) var(--sp-4); border:1px solid var(--border); border-radius:var(--r-md); background:var(--surface); }
-.live-detail-head { display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-3); }
-.live-detail-head .live-badge { margin-left:auto; }
-.live-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:var(--sp-3); margin:0; }
-.live-stats dt { font-size:var(--t-xs); color:var(--ink-3); }
-.live-stats dd { margin:2px 0 0; font-weight:600; color:var(--ink); overflow-wrap:anywhere; }
 
-/* All expenses (approvers): category + employee filters. Header on desktop, a bar above the list on phones. */
-.exp-filters-bar { display:none; }
+/* ── Set monthly fund dialog (Approver dashboard) ─────────────── */
+.fund-form { display:flex; flex-direction:column; }
+.fund-lead {
+  display:flex; align-items:center; gap:12px; margin:0 0 20px; padding:12px 14px;
+  background:var(--accent-soft); border-radius:var(--r-md);
+  color:var(--ink-2); font-size:var(--t-base); line-height:1.5;
+}
+.fund-lead strong { color:var(--ink); font-weight:600; }
+.fund-badge {
+  width:36px; height:36px; flex:none; display:grid; place-items:center; border-radius:var(--r-full);
+  background:var(--surface); color:var(--accent-ink); box-shadow:0 0 0 1px var(--accent-soft-2);
+}
+.fund-badge .icon { font-size:18px; }
+.fund-summary {
+  display:grid; grid-template-columns:1fr 1fr; gap:1px; margin:0 0 16px;
+  background:var(--border); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden;
+}
+.fund-stat { display:flex; flex-direction:column; gap:2px; min-width:0; padding:10px 14px; background:var(--surface-2); }
+.fund-stat-label { font-size:var(--t-xs); font-weight:500; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-3); }
+.fund-stat strong { font-size:var(--t-md); font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.fund-stat strong.is-empty { color:var(--ink-3); font-weight:500; }
+.fund-reuse { align-self:flex-start; margin:-6px 0 14px -8px; }
+.fund-form input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+.fund-form input[type=number]::-webkit-outer-spin-button,
+.fund-form input[type=number]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.fund-form .input-affix input { font-variant-numeric:tabular-nums; }
+.fund-form select:disabled, .fund-form input:disabled { background:var(--surface-3); cursor:not-allowed; }
+.fund-error { margin:0 0 4px; padding:10px 12px; border-radius:var(--r-sm); background:var(--st-critical-bg); }
+.fund-actions {
+  display:flex; justify-content:flex-end; gap:8px; margin-top:12px; padding-top:16px;
+  border-top:1px solid var(--border);
+}
+@media (max-width:480px) {
+  .fund-actions .btn { flex:1; }
+}
+
+/* ── All expenses (approver): header filters on phones ─────────────
+   The filters sit in the header's right-hand group, which cannot shrink, so on a phone they pushed the
+   menu button and the title out of the way. On narrow screens the header now wraps: menu + title + theme
+   toggle on the first row, the two filters on their own row underneath. Only on phones (640px and below):
+   on a laptop or tablet the filters stay on the right of the header, side by side. Other pages are not affected. */
 @media (max-width:640px) {
-  .exp-filters-head { display:none; }
-  .exp-filters-bar { display:block; margin-bottom:var(--sp-3); }
-  .exp-filters-bar .exp-filters { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); }
-  .exp-filters-bar .filter select { width:100%; max-width:none; height:34px; font-size:12px; }
-  .exp-filters-bar .exp-filters > .btn { grid-column:1 / -1; justify-self:start; }
+  .page-header:has(.exp-filters-head) { flex-wrap:wrap; row-gap:var(--sp-2); }
+  .page-header:has(.exp-filters-head) .page-header-right { display:contents; }
+  .page-header:has(.exp-filters-head) .page-header-left { order:1; flex:1 1 0; min-width:0; }
+  .page-header:has(.exp-filters-head) .theme-toggle { order:2; }
+  .page-header:has(.exp-filters-head) .user-chip { order:3; }
+  .page-header:has(.exp-filters-head) .exp-filters-head { order:4; flex:0 0 100%; min-width:0; }
+  .exp-filters-head .dash-filters { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); width:100%; margin:0; padding:0; overflow:visible; }
+  .exp-filters-head .filter select { width:100%; height:32px; font-size:11px; }
+  .exp-filters-head .dash-filters > .btn { grid-column:1 / -1; justify-self:start; }
 }

@@ -28,7 +28,7 @@ function fmtSize(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function FileField({ field, value, onChange }) {
+function FileField({ field, value, onChange, allValues = {} }) {
   const fileList = Array.isArray(value) ? value : [];
   const inputRef = useRef(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -49,13 +49,27 @@ function FileField({ field, value, onChange }) {
 
     setChecking(true);
     try {
-      const seen = new Set(await Promise.all(fileList.map(hashOf)));
+      // hash -> where it already is. Files in this field, plus files in the linked field(s)
+      // (field.dupWith): the Start meter and End meter photos must not be the same picture.
+      const seen = new Map();
+      for (const h of await Promise.all(fileList.map(hashOf))) seen.set(h, 'here');
+      for (const peer of field.dupWith || []) {
+        const peerFiles = (Array.isArray(allValues[peer.key]) ? allValues[peer.key] : [])
+          .filter((p) => p && (p.dataUrl || p instanceof Blob));   // saved items without bytes can't be hashed here; the server checks them
+        for (const h of await Promise.all(peerFiles.map(hashOf))) if (!seen.has(h)) seen.set(h, peer.label);
+      }
       const msgs = [];
       const good = [];
       for (const f of ok) {
         const hash = await hashPicked(f);
-        if (seen.has(hash)) { msgs.push(`Duplicate bill: "${f.name}" is already added. Keep only one copy.`); continue; }
-        seen.add(hash);
+        if (seen.has(hash)) {
+          const where = seen.get(hash);
+          msgs.push(where === 'here'
+            ? `Duplicate bill: "${f.name}" is already added. Keep only one copy.`
+            : `Duplicate bill: "${f.name}" is already used as the ${where}. Upload a different photo.`);
+          continue;
+        }
+        seen.set(hash, 'here');
         good.push(f);
       }
       if (good.length) onChange(field.key, [...fileList, ...good]);
@@ -214,7 +228,7 @@ function CheckboxesField({ field, value, onChange }) {
 /*
  * Memoised: a field only re-renders when its own value changes. Before, every
  * keystroke anywhere re-rendered every field on the form (including the date
- * picker and the place inputs). `allValues` is only passed to route fields.
+ * picker and the place inputs). `allValues` is only passed to route fields and to file fields that have `dupWith`.
  */
 function FieldRenderer({ field, value, onChange, allValues = {}, invalid = false }) {
   const id = `f_${field.key}`;
@@ -346,7 +360,7 @@ function FieldRenderer({ field, value, onChange, allValues = {}, invalid = false
       return <CheckboxesField field={field} value={value} onChange={onChange} />;
 
     case 'file':
-      return <FileField field={field} value={value} onChange={onChange} />;
+      return <FileField field={field} value={value} onChange={onChange} allValues={allValues} />;
 
     default:
       return (

@@ -37,9 +37,9 @@ export const EXPENSE_TYPES = {
         showIf: v => TRANSPORT_BY_TICKET.includes(v.transport) },
       
       // CORRECTED: Added checkDuplicate: true directly to the original fields
-      { key: 'startMeter', type: 'file', required: true, checkDuplicate: true, label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
+      { key: 'startMeter', type: 'file', required: true, checkDuplicate: true, dupWith: [{ key: 'endMeter', label: 'End meter' }], label: 'Start meter', title: 'Upload start meter image', hint: 'Photo of the odometer before you left',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
-      { key: 'endMeter',   type: 'file', required: true, checkDuplicate: true, label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
+      { key: 'endMeter',   type: 'file', required: true, checkDuplicate: true, dupWith: [{ key: 'startMeter', label: 'Start meter' }], label: 'End meter', title: 'Upload end meter image', hint: 'Photo of the odometer on arrival',
         showIf: v => TRANSPORT_BY_VEHICLE.includes(v.transport) },
         
       { key: 'amount',     type: 'number', label: 'Amount', money: true, required: true, min: 0.01 },
@@ -54,7 +54,7 @@ export const EXPENSE_TYPES = {
       { key: 'startLocation',   type: 'place',  label: 'Start location', placeholder: 'Where are you starting?', required: true, stage: 'start', geolocate: true },
       
       // CORRECTED: Added checkDuplicate: true directly here
-      { key: 'startMeterImage', type: 'file',   label: 'Start meter image', title: 'Upload start meter image', checkDuplicate: true,
+      { key: 'startMeterImage', type: 'file',   label: 'Start meter image', title: 'Upload start meter image', checkDuplicate: true, dupWith: [{ key: 'endMeterImage', label: 'End meter image' }],
         hint: "Photo of your vehicle's odometer at the start", required: true, stage: 'start' },
         
       { key: 'endLocation',     type: 'place',  label: 'End location', placeholder: 'Where did you arrive?', required: true, stage: 'end' },
@@ -63,7 +63,7 @@ export const EXPENSE_TYPES = {
         required: true, min: 0.1, unit: 'km', autoKm: true, stage: 'end' },
         
       // CORRECTED: Added checkDuplicate: true directly here
-      { key: 'endMeterImage',   type: 'file',   label: 'End meter image', title: 'Upload end meter image', checkDuplicate: true,
+      { key: 'endMeterImage',   type: 'file',   label: 'End meter image', title: 'Upload end meter image', checkDuplicate: true, dupWith: [{ key: 'startMeterImage', label: 'Start meter image' }],
         hint: 'Photo of the odometer at the end', required: true, stage: 'end' },
         
       { key: 'remarks',         type: 'textarea', label: 'Remarks', placeholder: 'Enter remarks here', stage: 'end' },

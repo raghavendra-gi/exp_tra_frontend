@@ -205,7 +205,11 @@ function ExpenseForm() {
       console.error(err);
       // The server found the same bill attached twice: show the message on the bill field itself.
       const billField = String(err.message || '').startsWith('Duplicate bill')
-        ? visibleFields.find((f) => f.checkDuplicate && (!f.showIf || f.showIf(values)))
+        ? (() => {
+            const dupFields = visibleFields.filter((f) => f.checkDuplicate && (!f.showIf || f.showIf(values)));
+            // a meter clash names the field(s) (e.g. "Start meter" / "End meter"): show it on the last one named
+            return [...dupFields].reverse().find((f) => err.message.includes(f.label)) || dupFields[0];
+          })()
         : null;
       if (billField) {
         setErrors((prev) => ({ ...prev, [billField.key]: err.message }));
@@ -261,7 +265,7 @@ function ExpenseForm() {
         field={field}
         value={values[field.key]}
         onChange={handleChange}
-        allValues={field.type === 'route' ? values : undefined}
+        allValues={field.type === 'route' || field.dupWith ? values : undefined}
         invalid={!!errors[field.key]}
       />
       {errors[field.key] && (

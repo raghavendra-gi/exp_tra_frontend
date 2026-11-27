@@ -165,7 +165,7 @@ export default function ExpensesPage() {
       <span className="btn-text">New expense</span>
     </button>
   ) : (
-    <div className="exp-filters-head">{filterControls}</div>   // desktop: in the page header; phones get the bar below
+    <div className="exp-filters-head">{filterControls}</div>   // the category / employee filters live in the page header only
   );
 
   const activeLabel = TABS.find((t) => t.key === activeTab)?.label.toLowerCase();
@@ -175,8 +175,6 @@ export default function ExpensesPage() {
       title={isApprover ? 'All expenses' : 'My expenses'}
       headerRight={headerRight}
     >
-      {isApprover && <div className="exp-filters-bar">{filterControls}</div>}
-
       <div className="card card-flush">
         <div className="tabs" role="tablist" aria-label="Expense status">
           {TABS.map((t) => (
