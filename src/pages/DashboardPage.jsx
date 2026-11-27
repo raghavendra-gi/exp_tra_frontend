@@ -84,6 +84,9 @@ export default function DashboardPage() {
   const [fundInput, setFundInput] = useState('');
   const [fundEmployee, setFundEmployee] = useState('');   // username picked in the modal
   const [fundEmployees, setFundEmployees] = useState([]); // [{ username, display_name }]
+  const [fundLoading, setFundLoading] = useState(false);   // employee list is being fetched
+  const [fundSaving, setFundSaving] = useState(false);
+  const [fundError, setFundError] = useState('');          // shown inside the dialog (no more alert() pop-ups)
   const [billsOpen, setBillsOpen] = useState(false);       // approved bills behind the budget card
   const [billsEmployee, setBillsEmployee] = useState('');   // employee picked inside the bills modal only (does not touch the dashboard filter)
 
@@ -128,10 +131,14 @@ export default function DashboardPage() {
     setFundInput(hit && hit.amount != null ? String(hit.amount) : '');
   };
 
+  const closeFundModal = () => { if (!fundSaving) setIsFundModalOpen(false); };
+
   const openFundModal = async () => {
     setFundInput('');
     setFundEmployee('');
     setFundEmployees([]);
+    setFundError('');
+    setFundLoading(true);
     setIsFundModalOpen(true);
     try {
       const res = await fetch(`${API}/fund/employees?year=${year}&month=${month + 1}`, {
@@ -142,19 +149,24 @@ export default function DashboardPage() {
         setFundEmployees(list);
         if (filterUsername) pickFundEmployee(filterUsername, list);
       } else {
-        alert(`Could not load employees (${res.status}).`);
+        setFundError(`Could not load employees (${res.status}). Please try again.`);
       }
     } catch (err) {
       console.error('Failed to load employees', err);
-      alert(`Could not load employees: ${err.message}. Check VITE_API_URL points to your deployed backend.`);
+      setFundError('Could not reach the server. If it was idle it may be waking up, so please close this and try again in a minute.');
+    } finally {
+      setFundLoading(false);
     }
   };
 
   const handleSaveFund = async () => {
-    if (!fundEmployee) { alert('Please select an employee.'); return; }
+    if (fundSaving) return;
+    setFundError('');
+    if (!fundEmployee) { setFundError('Please select an employee.'); return; }
     const amount = parseFloat(fundInput);
-    if (!fundInput || isNaN(amount) || amount < 0) { alert('Please enter a valid amount for the fund.'); return; }
+    if (fundInput === '' || isNaN(amount) || amount < 0) { setFundError('Please enter a valid amount (0 or more).'); return; }
 
+    setFundSaving(true);
     try {
       const res = await fetch(`${API}/fund`, {
         method: 'POST',
@@ -165,12 +177,15 @@ export default function DashboardPage() {
         setIsFundModalOpen(false);
         fetchFund();
       } else {
-        const text = await res.text();
-        alert(`Error ${res.status}: ${text}`);
+        let msg = '';
+        try { msg = (await res.json())?.detail; } catch { /* not JSON */ }
+        setFundError(typeof msg === 'string' && msg ? msg : `Could not save the fund (error ${res.status}).`);
       }
     } catch (err) {
       console.error(err);
-      alert(`Request failed: ${err.message}`);
+      setFundError('Could not reach the server. Please try again.');
+    } finally {
+      setFundSaving(false);
     }
   };
 
@@ -507,46 +522,111 @@ export default function DashboardPage() {
         </>
       )}
 
-            {/* ── NEW: Set Fund Modal ── */}
+      {/* ── Set monthly fund ── */}
       {isFundModalOpen && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div className="card" style={{ width: '400px', padding: '24px' }}>
-            <h2 style={{ marginTop: 0 }}>Set Monthly Fund</h2>
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Choose an employee and enter the budget allocated to them for {monthLabel(year, month)}.</p>
-            <select
-              value={fundEmployee}
-              onChange={(e) => pickFundEmployee(e.target.value)}
-              style={{ width: '100%', marginBottom: '12px', padding: '8px' }}
-            >
-              <option value="">Select employee…</option>
-              {fundEmployees.map((u) => (
-                <option key={u.username} value={u.username}>
-                  {u.display_name} ({u.username}){u.amount != null ? ` — ${formatMoney(u.amount)}` : ' — not set'}
-                </option>
-              ))}
-            </select>
-            {selectedFundEmp && (
-              <p style={{ margin: '0 0 12px', fontSize: '0.85rem', color: '#64748b' }}>
-                {selectedFundEmp.amount != null
-                  ? `Current fund for ${monthLabel(year, month)}: ${formatMoney(selectedFundEmp.amount)}`
-                  : `No fund set yet for ${monthLabel(year, month)}`}
-                {selectedFundEmp.prev_amount != null && ` · Previous month: ${formatMoney(selectedFundEmp.prev_amount)}`}
-              </p>
-            )}
-            <input 
-              type="number" 
-              className="input" 
-              value={fundInput} 
-              onChange={e => setFundInput(e.target.value)} 
-              placeholder="e.g. 50000" 
-              style={{ width: '100%', marginBottom: '16px', padding: '8px' }}
-            />
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button className="btn btn-ghost" onClick={() => setIsFundModalOpen(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveFund}>{selectedFundEmp && selectedFundEmp.amount != null ? 'Update Fund' : 'Save Fund'}</button>
+        <Modal isOpen onClose={closeFundModal} size="sm" title="Set monthly fund">
+          <form
+            className="fund-form"
+            onSubmit={(e) => { e.preventDefault(); handleSaveFund(); }}
+            noValidate
+          >
+            <div className="fund-lead">
+              <span className="fund-badge" aria-hidden="true"><svg className="icon"><use href="#i-rupee" /></svg></span>
+              <span>
+                Allocate a budget to an employee for <strong>{monthLabel(year, month)}</strong>.
+                
+              </span>
             </div>
-          </div>
-        </div>
+
+            <div className="form-group">
+              <label htmlFor="fund_employee">Employee<span className="req" aria-hidden="true">*</span></label>
+              <select
+                id="fund_employee"
+                value={fundEmployee}
+                onChange={(e) => { setFundError(''); pickFundEmployee(e.target.value); }}
+                disabled={fundLoading || fundSaving}
+                autoFocus
+              >
+                <option value="">{fundLoading ? 'Loading employees…' : 'Select an employee'}</option>
+                {fundEmployees.map((u) => (
+                  <option key={u.username} value={u.username}>
+                    {u.display_name} ({u.username}){u.amount == null ? ' — not set' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedFundEmp && (
+              <>
+                <div className="fund-summary" aria-label={`Fund details for ${selectedFundEmp.display_name}`}>
+                  <div className="fund-stat">
+                    <span className="fund-stat-label">{monthLabel(year, month)}</span>
+                    <strong className={selectedFundEmp.amount == null ? 'is-empty' : ''}>
+                      {selectedFundEmp.amount != null ? formatMoney(selectedFundEmp.amount) : 'Not set'}
+                    </strong>
+                  </div>
+                  <div className="fund-stat">
+                    <span className="fund-stat-label">Previous month</span>
+                    <strong className={selectedFundEmp.prev_amount == null ? 'is-empty' : ''}>
+                      {selectedFundEmp.prev_amount != null ? formatMoney(selectedFundEmp.prev_amount) : '—'}
+                    </strong>
+                  </div>
+                </div>
+                {selectedFundEmp.prev_amount != null && String(selectedFundEmp.prev_amount) !== fundInput && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm fund-reuse"
+                    onClick={() => { setFundError(''); setFundInput(String(selectedFundEmp.prev_amount)); }}
+                  >
+                    Use previous month’s amount
+                  </button>
+                )}
+              </>
+            )}
+
+            <div className="form-group">
+              <label htmlFor="fund_amount">Monthly budget<span className="req" aria-hidden="true">*</span></label>
+              <span className="input-affix">
+                <span className="affix" aria-hidden="true">₹</span>
+                <input
+                  id="fund_amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="any"
+                  value={fundInput}
+                  onChange={(e) => { setFundError(''); setFundInput(e.target.value); }}
+                  placeholder="e.g. 50000"
+                  disabled={fundSaving}
+                />
+              </span>
+              {fundInput !== '' && !isNaN(parseFloat(fundInput)) && parseFloat(fundInput) >= 0 && (
+                <p className="field-hint">
+                  {formatMoney(parseFloat(fundInput))}
+                  {selectedFundEmp?.amount != null && Number(selectedFundEmp.amount) !== parseFloat(fundInput)
+                    && ` (currently ${formatMoney(selectedFundEmp.amount)})`}
+                </p>
+              )}
+            </div>
+
+            {fundError && (
+              <div className="field-error fund-error" role="alert">
+                <svg className="icon" aria-hidden="true"><use href="#i-alert" /></svg> {fundError}
+              </div>
+            )}
+
+            <div className="fund-actions">
+              <button type="button" className="btn btn-secondary" onClick={closeFundModal} disabled={fundSaving}>Cancel</button>
+              <button
+                type="submit"
+                className={`btn btn-primary${fundSaving ? ' is-busy' : ''}`}
+                disabled={fundSaving || fundLoading || !fundEmployee}
+              >
+                {selectedFundEmp && selectedFundEmp.amount != null ? 'Update fund' : 'Save fund'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {billsOpen && (

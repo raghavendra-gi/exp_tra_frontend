@@ -22,6 +22,7 @@ import { formatDateTime } from '../utils/format';
 const POLL_MS = 15_000;
 const FRESH_S = 5 * 60;            // newer than this = green
 const STALE_S = 30 * 60;           // older than this = grey
+const CIRCLE_MAX_M = 30;             // the accuracy circle on the map is never drawn wider than this (the real accuracy still shows in the details)
 
 const initials = (name) => (name || '?').trim().substring(0, 2).toUpperCase();
 
@@ -214,7 +215,7 @@ export default function LiveTrackingPage() {
     const last = selected?.last;
     if (!last || !Number.isFinite(last.accuracy) || last.accuracy <= 0) return;
     circleRef.current = new m.Circle({
-      map: m.map, center: { lat: last.lat, lng: last.lng }, radius: last.accuracy,
+      map: m.map, center: { lat: last.lat, lng: last.lng }, radius: Math.min(last.accuracy, CIRCLE_MAX_M),
       strokeColor: '#2563eb', strokeOpacity: 0.5, strokeWeight: 1, fillColor: '#2563eb', fillOpacity: 0.12, clickable: false,
     });
   }, [selected, mapState]);
