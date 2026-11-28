@@ -8,7 +8,7 @@ const TYPES = Object.keys(EXPENSE_TYPES);
 
 // One line under each category so people know which one to pick.
 const DESCRIPTIONS = {
-  'Pooja': 'Flowers, camphor, ghee and other pooja items',
+  'Pooja': 'Flowers, Haldi, ghee and other pooja items',
   'Food': 'Tiffin, lunch or dinner while on duty',
   'Plan Trip': 'Bus, train, flight or own-vehicle travel',
   'Regional Trip': 'Start when you leave, end when you arrive',

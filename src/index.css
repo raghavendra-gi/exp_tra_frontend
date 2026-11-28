@@ -11,14 +11,14 @@
 :root {
   /* Type scale (Elements-style, 14px body) */
   --font-sans:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --t-xs:12px;  --t-sm:11px;  --t-base:12px; --t-md:15px; --t-lg:16px; --t-xl:20px;
+  --t-xs:12px;  --t-sm:15px;  --t-base:12px; --t-md:15px; --t-lg:16px; --t-xl:20px;
   --lh-tight:1.25; --lh:1.5;
 
   /* legacy names still used inline by a few components */
   --fs-xs:var(--t-xs); --fs-sm:var(--t-sm); --fs-base:var(--t-base); --fs-md:var(--t-base); --fs-lg:var(--t-md);
 
   /* Spacing (4px grid) */
-  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:12px; --sp-5:2px; --pad:20px; --sp-6:24px; --sp-7:32px; --sp-8:40px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:12px; --sp-5:4px; --pad:20px; --sp-6:24px; --sp-7:32px; --sp-8:40px;
 
   /* Radius: small for controls, medium for cards, large for dialogs */
   --r-xs:4px; --r-sm:6px; --r-md:10px; --r-lg:14px; --r-full:999px;
@@ -447,7 +447,7 @@ strong { font-weight:600; }
   box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent);
 }
 .type-glyph-sm { width:28px; height:28px; font-size:15px; }
-.type-glyph-lg { width:38px; height:38px; font-size:20px; border-radius:var(--r-lg); }
+.type-glyph-lg { width:43px; height:43px; font-size:27px; border-radius:var(--r-lg); }
 .type-glyph[data-tone="amber"]  { --tone:#c2700a; }
 .type-glyph[data-tone="orange"] { --tone:#d9541e; }
 .type-glyph[data-tone="sky"]    { --tone:#0b84c6; }
@@ -2811,8 +2811,9 @@ body:not(.modal-open) .track-pill { display:none !important; }
 /* Ensure the form footer matches the design */
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;   /* Back + Submit sit together on the right */
   align-items: center;
+  gap: var(--sp-3);
   background: var(--surface-2);
   margin: var(--sp-6) calc(-1 * var(--sp-6)) calc(-1 * var(--sp-6));
   padding: var(--sp-4) var(--sp-6);
@@ -2825,19 +2826,21 @@ body:not(.modal-open) .track-pill { display:none !important; }
     padding: var(--sp-3);
   }
   
+  /* Back + Submit stay side by side (same as laptop), equal width */
   .form-actions {
-    flex-direction: column;
-    gap: var(--sp-4);
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: stretch;
+    gap: var(--sp-3);
     margin: var(--sp-4) calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
     padding: var(--sp-4);
   }
   
-  .form-actions .btn-row {
-    width: 100%;
-  }
-  
   .form-actions .btn {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    justify-content: center;
   }
 }
 
@@ -2880,9 +2883,8 @@ body:not(.modal-open) .track-pill { display:none !important; }
 /* ── All expenses (approver): header filters on phones ─────────────
    The filters sit in the header's right-hand group, which cannot shrink, so on a phone they pushed the
    menu button and the title out of the way. On narrow screens the header now wraps: menu + title + theme
-   toggle on the first row, the two filters on their own row underneath. Only on phones (640px and below):
-   on a laptop or tablet the filters stay on the right of the header, side by side. Other pages are not affected. */
-@media (max-width:640px) {
+   toggle on the first row, the two filters on their own row underneath. Other pages are not affected. */
+@media (max-width:768px) {
   .page-header:has(.exp-filters-head) { flex-wrap:wrap; row-gap:var(--sp-2); }
   .page-header:has(.exp-filters-head) .page-header-right { display:contents; }
   .page-header:has(.exp-filters-head) .page-header-left { order:1; flex:1 1 0; min-width:0; }
@@ -2893,3 +2895,139 @@ body:not(.modal-open) .track-pill { display:none !important; }
   .exp-filters-head .filter select { width:100%; height:32px; font-size:11px; }
   .exp-filters-head .dash-filters > .btn { grid-column:1 / -1; justify-self:start; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LOGIN FORM — theme-aware card (light + dark), leading icons,
+   arrow button. Final override layer; keep at the end of the file.
+   ══════════════════════════════════════════════════════════════ */
+.login-box {
+  /* light theme (default) */
+  --lf-card: rgba(255, 255, 255, 0.88);
+  --lf-card-border: rgba(255, 255, 255, 0.9);
+  --lf-card-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  --lf-title: #0f172a;
+  --lf-sub: #475569;
+  --lf-label: #64748b;
+  --lf-icon: #64748b;
+  --lf-field: #ffffff;
+  --lf-field-border: rgba(15, 23, 42, 0.14);
+  --lf-text: #0f172a;
+  --lf-placeholder: #94a3b8;
+  --lf-toggle-hover-bg: rgba(15, 23, 42, 0.06);
+  --lf-toggle-hover: #0f172a;
+}
+:root[data-theme="dark"] .login-box {
+  --lf-card: rgba(14, 22, 42, 0.82);
+  --lf-card-border: rgba(255, 255, 255, 0.08);
+  --lf-card-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --lf-title: #f8fafc;
+  --lf-sub: #94a3b8;
+  --lf-label: #8b97b1;
+  --lf-icon: #8b97b1;
+  --lf-field: #060b19;
+  --lf-field-border: rgba(255, 255, 255, 0.08);
+  --lf-text: #f8fafc;
+  --lf-placeholder: #5f6b85;
+  --lf-toggle-hover-bg: rgba(255, 255, 255, 0.06);
+  --lf-toggle-hover: #e2e8f0;
+}
+
+.login-box,
+:root[data-theme="dark"] .login-box {
+  background: var(--lf-card);
+  border: 1px solid var(--lf-card-border);
+  box-shadow: var(--lf-card-shadow);
+}
+.login-box h1,
+:root[data-theme="dark"] .login-box h1 { color: var(--lf-title); }
+.login-box .login-sub,
+:root[data-theme="dark"] .login-sub { color: var(--lf-sub); }
+
+/* Labels: small uppercase, muted */
+.login-box .form-group label,
+:root[data-theme="dark"] .login-box .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lf-label);
+  margin-bottom: 10px;
+}
+
+/* Field wrapper holds the icon + input */
+.login-box .lf-field { position: relative; display: block; }
+.login-box .lf-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  color: var(--lf-icon);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+.login-box .lf-field:focus-within .lf-icon { color: #3b82f6; }
+
+.login-box .form-group input,
+:root[data-theme="dark"] .login-box .form-group input {
+  width: 100%;
+  height: 56px;
+  padding: 0 16px 0 52px;
+  font-size: 16px;
+  color: var(--lf-text);
+  background: var(--lf-field);
+  border: 1px solid var(--lf-field-border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+.login-box .form-group input::placeholder { color: var(--lf-placeholder); }
+.login-box .pw-wrap input { padding-right: 52px; }
+.login-box .form-group input:focus,
+:root[data-theme="dark"] .login-box .form-group input:focus {
+  background: var(--lf-field);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+}
+/* keep browser autofill matching the theme */
+.login-box .form-group input:-webkit-autofill {
+  -webkit-text-fill-color: var(--lf-text);
+  caret-color: var(--lf-text);
+  box-shadow: 0 0 0 1000px var(--lf-field) inset;
+  border-color: var(--lf-field-border);
+}
+
+/* Show/hide password */
+.login-box .pw-toggle {
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--lf-icon);
+  border-radius: 10px;
+}
+.login-box .pw-toggle:hover { color: var(--lf-toggle-hover); background: var(--lf-toggle-hover-bg); }
+.login-box .lf-eye-svg { width: 22px; height: 22px; }
+
+/* Sign-in button with arrow */
+.login-box .btn-primary {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
+}
+.login-box .btn-primary:hover:not([disabled]) {
+  background: linear-gradient(180deg, #4d8ff8 0%, #2b6cf0 100%);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.45);
+}
+.login-box .lf-arrow { width: 20px; height: 20px; transition: transform 0.2s ease; }
+.login-box .btn-primary:hover:not([disabled]) .lf-arrow { transform: translateX(4px); }
+.login-box .btn-primary.is-busy .lf-arrow { display: none; }
